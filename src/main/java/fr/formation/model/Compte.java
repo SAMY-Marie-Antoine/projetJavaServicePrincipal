@@ -28,8 +28,7 @@ public class Compte {
 	@Column(name="description")
 	private  String description;
 	
-	@Column(columnDefinition = "TIMESTAMP")
-	@Generated(GenerationTime.INSERT)
+	
 	@Column(name="date_ajout")
 	private LocalDate dateAjout;
 	
