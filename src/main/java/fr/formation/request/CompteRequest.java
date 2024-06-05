@@ -1,41 +1,51 @@
 package fr.formation.request;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+import fr.formation.model.Utilisateur;
 
 
 public class CompteRequest {
 
 	private String nom;
-	private BigDecimal description;
-	private LocalDate dateAjout;
-	private LocalDate dateMAJ;
+	private String description;
+	private LocalDateTime dateAjout;
+	private LocalDateTime dateMAJ;
 	private String nomUtilisateurPlateforme;
 	private String urlPlateforme;
-	private BigDecimal valeurMotdePassePlateforme;
-
+	private String valeurMotdePassePlateforme;
+	private Utilisateur utilisateur;
+	
+	
+	public Utilisateur getUtilisateur() {
+		return utilisateur;
+	}
+	public void setUtilisateur(Utilisateur utilisateur) {
+		this.utilisateur = utilisateur;
+	}
 	public String getNom() {
 		return nom;
 	}
 	public void setNom(String nom) {
 		this.nom = nom;
 	}
-	public BigDecimal getDescription() {
+	public String getDescription() {
 		return description;
 	}
-	public void setDescription(BigDecimal description) {
+	public void setDescription(String description) {
 		this.description = description;
 	}
-	public LocalDate getDateAjout() {
+	public LocalDateTime getDateAjout() {
 		return dateAjout;
 	}
-	public void setDateAjout(LocalDate dateAjout) {
+	public void setDateAjout(LocalDateTime dateAjout) {
 		this.dateAjout = dateAjout;
 	}
-	public LocalDate getDateMAJ() {
+	public LocalDateTime getDateMAJ() {
 		return dateMAJ;
 	}
-	public void setDateMAJ(LocalDate dateMAJ) {
+	public void setDateMAJ(LocalDateTime dateMAJ){
 		this.dateMAJ = dateMAJ;
 	}
 	public String getNomUtilisateurPlateforme() {
@@ -50,10 +60,10 @@ public class CompteRequest {
 	public void setUrlPlateforme(String urlPlateforme) {
 		this.urlPlateforme = urlPlateforme;
 	}
-	public BigDecimal getValeurMotdePassePlateforme() {
+	public String getValeurMotdePassePlateforme() {
 		return valeurMotdePassePlateforme;
 	}
-	public void setValeurMotdePassePlateforme(BigDecimal valeurMotdePassePlateforme) {
+	public void setValeurMotdePassePlateforme(String valeurMotdePassePlateforme) {
 		this.valeurMotdePassePlateforme = valeurMotdePassePlateforme;
 	}
 

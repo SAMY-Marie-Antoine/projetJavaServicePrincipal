@@ -4,10 +4,10 @@ import java.time.LocalDateTime;
 
 import org.hibernate.annotations.UuidGenerator;
 
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
@@ -38,7 +38,7 @@ public class Compte {
 	@Column(name="url_plateforme")
 	private String urlPlateforme;
 	
-	@Column(name="valeur_motde_passe_plateforme", nullable = false, length = 512)
+	@Column(name="valeur_motde_passe_plateforme", length = 512)
 	private String valeurMotdePassePlateforme;
 	
 	@ManyToOne()

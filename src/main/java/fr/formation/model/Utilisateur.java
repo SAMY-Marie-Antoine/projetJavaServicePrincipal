@@ -12,6 +12,8 @@ import jakarta.persistence.Table;
 @Entity
 @Table(name = "utilisateur")
 public class Utilisateur {
+	
+	
     
     @Id
 	@UuidGenerator
@@ -23,10 +25,10 @@ public class Utilisateur {
 	@Column(name="date_de_naissance")
 	private LocalDate dateDeNaissance; 
 
-	@Column(name="email", nullable = false)
+	@Column(name="email")
 	private String email;
 
-	@Column(name="mot_de_passe", nullable = false)
+	@Column(name="mot_de_passe")
 	private String motDePasse;
 
 

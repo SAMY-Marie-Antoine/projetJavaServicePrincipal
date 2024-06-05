@@ -1,7 +1,8 @@
 package fr.formation.response;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
+
+import fr.formation.model.Utilisateur;
 
 public class CompteResponse {
 
@@ -12,8 +13,15 @@ public class CompteResponse {
 	private LocalDate dateMAJ;
 	private String nomUtilisateurPlateforme;
 	private String urlPlateforme;
-	private BigDecimal valeurMotdePassePlateforme;
+	private String valeurMotdePassePlateforme;
+	private Utilisateur utilisateur;
 
+	public Utilisateur getUtilisateur() {
+		return utilisateur;
+	}
+	public void setUtilisateur(Utilisateur utilisateur) {
+		this.utilisateur = utilisateur;
+	}
 	public String getId() {
 		return id;
 	}
@@ -56,10 +64,10 @@ public class CompteResponse {
 	public void setUrlPlateforme(String urlPlateforme) {
 		this.urlPlateforme = urlPlateforme;
 	}
-	public BigDecimal getValeurMotdePassePlateforme() {
+	public String getValeurMotdePassePlateforme() {
 		return valeurMotdePassePlateforme;
 	}
-	public void setValeurMotdePassePlateforme(BigDecimal valeurMotdePassePlateforme) {
+	public void setValeurMotdePassePlateforme(String valeurMotdePassePlateforme) {
 		this.valeurMotdePassePlateforme = valeurMotdePassePlateforme;
 	}
 
