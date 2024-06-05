@@ -23,7 +23,10 @@ public class Utilisateur {
 	@Column(name="date_de_naissance")
 	private LocalDate dateDeNaissance; 
 
-	@Column(name="mot_de_passe")
+	@Column(name="email", nullable = false)
+	private String email;
+
+	@Column(name="mot_de_passe", nullable = false)
 	private String motDePasse;
 
 
