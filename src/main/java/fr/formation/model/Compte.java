@@ -1,18 +1,16 @@
 package fr.formation.model;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
-import org.hibernate.annotations.GenerationTime;
 import org.hibernate.annotations.UuidGenerator;
 
-import jakarta.annotation.Generated;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.Temporal;
-import jakarta.persistence.TemporalType;
+
 
 @Entity
 @Table(name = "compte")
@@ -22,31 +20,30 @@ public class Compte {
 	@UuidGenerator
 	private String id;
 	
-	@Column(nullable = false)
+	@Column(name="nom", nullable = false)
 	private  String nom;
 	
 	@Column(name="description")
 	private  String description;
-	
-	@Temporal(TemporalType.DATE)
+		
 	@Column(name="date_ajout")
-	private LocalDate dateAjout;
+	private LocalDateTime dateAjout;
 	
-	@Temporal(TemporalType.TIMESTAMP)
-	@Generated(GenerationTime.INSERT)
 	@Column(name="date_maj")
-	private LocalDate dateMAJ;
+	private LocalDateTime dateMAJ;
 	
-	@Column
+	@Column(name="nom_utilisateur_plateforme;")
 	private String nomUtilisateurPlateforme;
 	
-	@Column
+	@Column(name="url_plateforme")
 	private String urlPlateforme;
 	
-	@Column(nullable = false)
-	private BigDecimal valeurMotdePassePlateforme;
+	@Column(name="valeur_motde_passe_plateforme", nullable = false, length = 512)
+	private String valeurMotdePassePlateforme;
 	
+	@ManyToOne()
 	private Utilisateur utilisateur ;
+
 	
 	public String getId() {
 		return id;
@@ -66,16 +63,16 @@ public class Compte {
 	public void setDescription(String description) {
 		this.description = description;
 	}
-	public LocalDate getDateAjout() {
+	public LocalDateTime getDateAjout() {
 		return dateAjout;
 	}
-	public void setDateAjout(LocalDate dateAjout) {
+	public void setDateAjout(LocalDateTime dateAjout) {
 		this.dateAjout = dateAjout;
 	}
-	public LocalDate getDateMAJ() {
+	public LocalDateTime getDateMAJ() {
 		return dateMAJ;
 	}
-	public void setDateMAJ(LocalDate dateMAJ) {
+	public void setDateMAJ(LocalDateTime dateMAJ) {
 		this.dateMAJ = dateMAJ;
 	}
 	public String getNomUtilisateurPlateforme() {
@@ -90,10 +87,10 @@ public class Compte {
 	public void setUrlPlateforme(String urlPlateforme) {
 		this.urlPlateforme = urlPlateforme;
 	}
-	public BigDecimal getValeurMotdePassePlateforme() {
+	public String getValeurMotdePassePlateforme() {
 		return valeurMotdePassePlateforme;
 	}
-	public void setValeurMotdePassePlateforme(BigDecimal valeurMotdePassePlateforme) {
+	public void setValeurMotdePassePlateforme(String valeurMotdePassePlateforme) {
 		this.valeurMotdePassePlateforme = valeurMotdePassePlateforme;
 	}
 	public Utilisateur getUtilisateur() {
@@ -103,6 +100,4 @@ public class Compte {
 		this.utilisateur = utilisateur;
 	}
 	
-	
-
 }
