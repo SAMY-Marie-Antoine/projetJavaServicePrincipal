@@ -28,7 +28,7 @@ public class Compte {
 	@Column(name="description")
 	private  String description;
 	
-	
+	@Temporal(TemporalType.DATE)
 	@Column(name="date_ajout")
 	private LocalDate dateAjout;
 	
