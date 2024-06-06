@@ -9,8 +9,9 @@ public class UtilisateurRequest {
     private LocalDate dateDeNaissance;
   	private String email;
   	private String motDePasse;
-  	
+  	private String confirmMotDePasse;
 
+	
 	public String getNom() {
 		return nom;
 	}
@@ -36,7 +37,12 @@ public class UtilisateurRequest {
 		this.motDePasse = motDePasse;
 	}
 	
-	
+	public String getConfirmMotDePasse() {
+		return confirmMotDePasse;
+	}
+	public void setConfirmMotDePasse(String confirmMotDePasse) {
+		this.confirmMotDePasse = confirmMotDePasse;
+	}
 
     
 }

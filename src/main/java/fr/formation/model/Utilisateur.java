@@ -8,14 +8,15 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 @Entity
 @Table(name = "utilisateur")
 public class Utilisateur {
-	
-	
-    
-    @Id
+
+
+
+	@Id
 	@UuidGenerator
 	private String id;
 
@@ -30,6 +31,9 @@ public class Utilisateur {
 
 	@Column(name="mot_de_passe")
 	private String motDePasse;
+
+	@Transient
+	private String confirmMotDePasse;
 
 
 
@@ -53,6 +57,13 @@ public class Utilisateur {
 		return dateDeNaissance;
 	}
 
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
+	}
 	public void setDateDeNaissance(LocalDate dateDeNaissance) {
 		this.dateDeNaissance = dateDeNaissance;
 	}
@@ -65,5 +76,13 @@ public class Utilisateur {
 		this.motDePasse = motDePasse;
 	}
 
-	
+
+	public String getConfirmMotDePasse() {
+		return confirmMotDePasse;
+	}
+
+	public void setConfirmMotDePasse(String confirmMotDePasse) {
+		this.confirmMotDePasse = confirmMotDePasse;
+	}
+
 }
