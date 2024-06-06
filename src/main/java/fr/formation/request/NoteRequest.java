@@ -10,7 +10,7 @@ import fr.formation.model.Utilisateur;
 public class NoteRequest {
 	
     private String nom;
-    private BigDecimal description;
+    private String description;
     private LocalDateTime dateAjout;
     private LocalDateTime dateModif;
   	private String contenu;
@@ -22,10 +22,10 @@ public class NoteRequest {
 	public void setNom(String nom) {
 		this.nom = nom;
 	}
-	public BigDecimal getDescription() {
+	public String getDescription() {
 		return description;
 	}
-	public void setDescription(BigDecimal description) {
+	public void setDescription(String description) {
 		this.description = description;
 	}
 	public LocalDateTime getDateAjout() {
