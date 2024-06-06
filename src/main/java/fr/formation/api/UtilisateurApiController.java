@@ -122,18 +122,22 @@ public class UtilisateurApiController {
 	public Utilisateur connexion(@RequestBody UtilisateurRequest request) {
 		Optional<Utilisateur> optUtilisateur = this.utilisateurRepository.findByEmailAndMotDePasse(request.getEmail(), request.getMotDePasse());
 
-		if(optUtilisateur.isEmpty()) {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-		}
-		if(optUtilisateur.get().getEmail() != request.getEmail()) {
-
+			
+		
+		if(!optUtilisateur.get().getEmail().equals(request.getEmail()) ) {
+			System.out.println("email inexistant !" + optUtilisateur.get().getEmail());
 
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
 		}
 		
-		if(optUtilisateur.get().getMotDePasse() != request.getMotDePasse()) {
+		if(!optUtilisateur.get().getMotDePasse().equals(request.getMotDePasse())) {
+			System.out.println("mot de passe incorrect");
 
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+			
+		}
+		if(optUtilisateur.isEmpty()) {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND);
 		}
 		
 		return optUtilisateur.get();
@@ -144,11 +148,11 @@ public class UtilisateurApiController {
 		Optional<Utilisateur> optUtilisateur = this.utilisateurRepository.findByEmailAndMotDePasse(request.getEmail(), request.getMotDePasse());
 
 
-		if(optUtilisateur.get().getEmail()== request.getEmail()) {
+		if(optUtilisateur.get().getEmail().equals(request.getEmail())) {
 
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
 		}
-		if(request.getMotDePasse() != request.getConfirmMotDePasse()) {
+		if(!request.getMotDePasse().equals(request.getConfirmMotDePasse())) {
 
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
 		}
