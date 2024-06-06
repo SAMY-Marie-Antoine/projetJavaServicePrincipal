@@ -23,6 +23,7 @@ import fr.formation.model.Utilisateur;
 import fr.formation.repository.UtilisateurRepository;
 import fr.formation.request.UtilisateurRequest;
 import fr.formation.response.UtilisateurResponse;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/utilisateur")
@@ -59,7 +60,7 @@ public class UtilisateurApiController {
 
 
 	@GetMapping("/{id}/name")
-	public String getNameById(@PathVariable String id) {
+	public String getNameById(@Valid @PathVariable String id) {
 		Optional<Utilisateur> optUtilisateur = this.utilisateurRepository.findById(id);
 
 		if (optUtilisateur.isPresent()) {
@@ -70,7 +71,7 @@ public class UtilisateurApiController {
 	}
 
 	@GetMapping("/{id}")
-	public Utilisateur findById(@PathVariable("id") String id) {
+	public Utilisateur findById(@Valid @PathVariable("id") String id) {
 		Optional<Utilisateur> utilisateur = this.utilisateurRepository.findById(id);
 
 		if (utilisateur.isEmpty()) {
@@ -82,7 +83,7 @@ public class UtilisateurApiController {
 
 	@PutMapping("/{id}")
 	@ResponseStatus(HttpStatus.CREATED)
-	public String update(@PathVariable("id") String id,@RequestBody UtilisateurRequest request) {
+	public String update(@Valid @PathVariable("id") String id,@RequestBody UtilisateurRequest request) {
 		Utilisateur utilisateurbdd=this.utilisateurRepository.findById(id).get();
 		Utilisateur utilisateur = new Utilisateur();
 		BeanUtils.copyProperties(request, utilisateurbdd);
@@ -94,7 +95,7 @@ public class UtilisateurApiController {
 
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.CREATED)
-	public String delete(@PathVariable("id") String id,@RequestBody UtilisateurRequest request) {
+	public String delete(@Valid @PathVariable("id") String id,@RequestBody UtilisateurRequest request) {
 		Optional<Utilisateur> utilisateurbdd=this.utilisateurRepository.findById(id);
 		Utilisateur utilisateur = new Utilisateur();
 		BeanUtils.copyProperties(request, utilisateurbdd);
@@ -108,7 +109,7 @@ public class UtilisateurApiController {
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-	public String create(@RequestBody UtilisateurRequest request) {
+	public String create(@Valid @RequestBody UtilisateurRequest request) {
 		Utilisateur utilisateur = new Utilisateur();
 
 		BeanUtils.copyProperties(request, utilisateur);
@@ -119,7 +120,7 @@ public class UtilisateurApiController {
 	}
 
 	@PostMapping("/connexion")
-	public Utilisateur connexion(@RequestBody UtilisateurRequest request) {
+	public Utilisateur connexion(@Valid @RequestBody UtilisateurRequest request) {
 		Optional<Utilisateur> optUtilisateur = this.utilisateurRepository.findByEmailAndMotDePasse(request.getEmail(), request.getMotDePasse());
 
 			
@@ -144,7 +145,7 @@ public class UtilisateurApiController {
 	}
 
 	@PostMapping("/inscription")
-	public Utilisateur inscription(@RequestBody UtilisateurRequest request) {
+	public Utilisateur inscription(@Valid @RequestBody UtilisateurRequest request) {
 		Optional<Utilisateur> optUtilisateur = this.utilisateurRepository.findByEmailAndMotDePasse(request.getEmail(), request.getMotDePasse());
 
 
