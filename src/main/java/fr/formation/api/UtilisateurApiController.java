@@ -127,26 +127,31 @@ public class UtilisateurApiController {
 		}
 		if(optUtilisateur.get().getEmail() != request.getEmail()) {
 
-				
+
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+		}
+		
+		if(optUtilisateur.get().getMotDePasse() != request.getMotDePasse()) {
+
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+		}
+		
+		return optUtilisateur.get();
+	}
+
+	@PostMapping("/inscription")
+	public Utilisateur inscription(@RequestBody UtilisateurRequest request) {
+		Optional<Utilisateur> optUtilisateur = this.utilisateurRepository.findByEmailAndMotDePasse(request.getEmail(), request.getMotDePasse());
+
+
+		if(optUtilisateur.get().getEmail()== request.getEmail()) {
+
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
 		}
 		if(request.getMotDePasse() != request.getConfirmMotDePasse()) {
 
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
 		}
-		if(optUtilisateur.get().getMotDePasse() != request.getMotDePasse()) {
-
-			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
-		}
-		if(optUtilisateur.get().getMotDePasse() != request.getConfirmMotDePasse()) {
-
-			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
-		}
-		return optUtilisateur.get();
-	}
-
-	@PostMapping("/inscription")
-	public Utilisateur inscription(@RequestBody UtilisateurRequest request) {
 
 		Utilisateur utilisateur = new Utilisateur();
 
