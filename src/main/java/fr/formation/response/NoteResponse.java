@@ -10,7 +10,7 @@ public class NoteResponse {
 
 
 	private String nom;
-	private BigDecimal description;
+	private String description;
 	private LocalDate dateAjout;
 	private LocalDate dateModif;
 	private String contenu;
@@ -29,10 +29,10 @@ public class NoteResponse {
 	public void setNom(String nom) {
 		this.nom = nom;
 	}
-	public BigDecimal getDescription() {
+	public String getDescription() {
 		return description;
 	}
-	public void setDescription(BigDecimal description) {
+	public void setDescription(String description) {
 		this.description = description;
 	}
 	public LocalDate getDateAjout() {

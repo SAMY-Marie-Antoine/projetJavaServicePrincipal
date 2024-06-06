@@ -20,32 +20,36 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import fr.formation.model.Compte;
+import fr.formation.model.Note;
 import fr.formation.repository.CompteRepository;
+import fr.formation.repository.NoteRepository;
 import fr.formation.request.CompteRequest;
+import fr.formation.request.NoteRequest;
 import fr.formation.response.CompteResponse;
+import fr.formation.response.NoteResponse;
 
 
 @RestController
-@RequestMapping("/api/compte")
+@RequestMapping("/api/note")
 @CrossOrigin("*")
-public class CompteApiController {
+public class NoteApiController {
 	@Autowired
-	private CompteRepository compteRepository;
+	private NoteRepository noteRepository;
 
 	@Autowired
 	//private CommentaireFeignClient commentaireFeignClient;
 
 	@GetMapping
-	public List<CompteResponse> findAll() {
-		List<Compte> comptes = this.compteRepository.findAll();
-		List<CompteResponse> response = new ArrayList<>();
+	public List<NoteResponse> findAll() {
+		List<Note> notes = this.noteRepository.findAll();
+		List<NoteResponse> response = new ArrayList<>();
 
-		for (Compte compte : comptes) {
-			CompteResponse compteResponse = new CompteResponse();
+		for (Note note : notes) {
+			NoteResponse noteResponse = new NoteResponse();
 
-			BeanUtils.copyProperties(compte, compteResponse);
+			BeanUtils.copyProperties(note, noteResponse);
 
-			response.add(compteResponse);
+			response.add(noteResponse);
 
 			/*Integer note = this.commentaireFeignClient.getNoteByProduitId(compte.getId());
 
@@ -61,61 +65,61 @@ public class CompteApiController {
 
 	@GetMapping("/{id}/name")
 	public String getNameById(@PathVariable String id) {
-		Optional<Compte> optCompte = this.compteRepository.findById(id);
+		Optional<Note> optNote = this.noteRepository.findById(id);
 
-		if (optCompte.isPresent()) {
-			return optCompte.get().getNom();
+		if (optNote.isPresent()) {
+			return optNote.get().getNom();
 		}
 
-		return "- product not found -";
+		return "- note not found -";
 	}
 
 
 
 	@GetMapping("/{id}")
-	public Compte findById(@PathVariable("id") String id) {
-		Optional<Compte> compte = this.compteRepository.findById(id);
+	public Note findById(@PathVariable("id") String id) {
+		Optional<Note> note = this.noteRepository.findById(id);
 
-		if (compte.isEmpty()) {
+		if (note.isEmpty()) {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Id Compte inexistant");
 		}
 
-		return compte.get();
+		return note.get();
 	}
 
 	@PutMapping("/{id}")
 	@ResponseStatus(HttpStatus.CREATED)
-	public String update(@PathVariable("id") String id,@RequestBody CompteRequest request) {
-		Compte comptebdd=this.compteRepository.findById(id).get();
-		Compte compte = new Compte();
-		BeanUtils.copyProperties(request, comptebdd);
+	public String update(@PathVariable("id") String id,@RequestBody NoteRequest request) {
+		Note notebdd=this.noteRepository.findById(id).get();
+		Note note = new Note();
+		BeanUtils.copyProperties(request, notebdd);
 
-		this.compteRepository.save(comptebdd);
+		this.noteRepository.save(notebdd);
 
-		return compte.getId();
+		return note.getId();
 	}
 
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.CREATED)
-	public String delete(@PathVariable("id") String id,@RequestBody CompteRequest request) {
-		Optional<Compte> comptebdd=this.compteRepository.findById(id);
-		Compte compte = new Compte();
-		BeanUtils.copyProperties(request, comptebdd);
+	public String delete(@PathVariable("id") String id,@RequestBody NoteRequest request) {
+		Optional<Note> notebdd=this.noteRepository.findById(id);
+		Note note = new Note();
+		BeanUtils.copyProperties(request, notebdd);
 
-		this.compteRepository.deleteById(id);
+		this.noteRepository.deleteById(id);
 
-		return compte.getId();
+		return note.getId();
 	}
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-	public String create(@RequestBody CompteRequest request) {
-		Compte compte = new Compte();
+	public String create(@RequestBody NoteRequest request) {
+		Note note = new Note();
 
-		BeanUtils.copyProperties(request, compte);
+		BeanUtils.copyProperties(request, note);
 
-		this.compteRepository.save(compte);
+		this.noteRepository.save(note);
 
-		return compte.getId();
+		return note.getId();
 	}
 }
