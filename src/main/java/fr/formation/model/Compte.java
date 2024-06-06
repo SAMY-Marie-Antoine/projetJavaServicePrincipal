@@ -38,7 +38,7 @@ public class Compte {
 	@Column(name="url_plateforme")
 	private String urlPlateforme;
 	
-	@Column(name="valeur_motde_passe_plateforme", length = 512)
+	@Column(name="valeur_motde_passe_plateforme", length = 512, nullable = false)
 	private String valeurMotdePassePlateforme;
 	
 	@ManyToOne()
