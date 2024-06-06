@@ -80,6 +80,7 @@ public class UtilisateurApiControllerTest {
     public void shouldCreateStatusCreated() throws Exception {
         // given
         Utilisateur utilisateur = new Utilisateur();
+        utilisateur.setId("1"); // Ajout H
         UtilisateurRequest request = new UtilisateurRequest();
 
         request.setNom("Hedieh");

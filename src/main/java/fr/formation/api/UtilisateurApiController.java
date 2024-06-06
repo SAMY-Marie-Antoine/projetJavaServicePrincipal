@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -29,14 +31,26 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/utilisateur")
 @CrossOrigin("*")
 public class UtilisateurApiController {
+
+	private static final Logger log = LoggerFactory.getLogger(UtilisateurApiController.class);
+
 	@Autowired
 	private UtilisateurRepository utilisateurRepository;
 
 	@Autowired
 	//private CommentaireFeignClient commentaireFeignClient;
 
+
+	public UtilisateurApiController(UtilisateurRepository utilisateurRepository) {
+		this.utilisateurRepository = utilisateurRepository;
+		log.info("Initialisation de UtilisateurApiController");
+	}
+
 	@GetMapping
 	public List<UtilisateurResponse> findAll() {
+
+		log.info("Exécution de la méthode findAll");
+
 		List<Utilisateur> utilisateurs = this.utilisateurRepository.findAll();
 		List<UtilisateurResponse> response = new ArrayList<>();
 
@@ -54,54 +68,72 @@ public class UtilisateurApiController {
             }*/
 		}
 
+		log.info("La méthode findAll a été exécutée avec succès");
 		return response;
 	}
 
 
-
 	@GetMapping("/{id}/name")
 	public String getNameById(@Valid @PathVariable String id) {
+
+		log.info("Exécution de la méthode getNameById avec l'id: " + id);		
+		
 		Optional<Utilisateur> optUtilisateur = this.utilisateurRepository.findById(id);
 
 		if (optUtilisateur.isPresent()) {
+
+			log.info("La méthode getNameById a été exécutée avec succès");			
 			return optUtilisateur.get().getNom();
 		}
 
-		return "- user not found -";
+		log.warn("Utilisateur non trouvé dans la méthode getNameById avec l'id: " + id);
+		return "- Utilisateur non trouvé -";
 	}
 
 	@GetMapping("/{id}")
 	public Utilisateur findById(@Valid @PathVariable("id") String id) {
+
+		log.info("Exécution de la méthode findById avec l'id: " + id);
 		Optional<Utilisateur> utilisateur = this.utilisateurRepository.findById(id);
 
 		if (utilisateur.isEmpty()) {
+			log.warn("Utilisateur non trouvé dans la méthode findById avec l'id: " + id);
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Id Utilisateur inexistant");
 		}
 
+		log.info("La méthode findById a été exécutée avec succès");
 		return utilisateur.get();
 	}
 
 	@PutMapping("/{id}")
 	@ResponseStatus(HttpStatus.CREATED)
 	public String update(@Valid @PathVariable("id") String id,@RequestBody UtilisateurRequest request) {
+
+		log.info("Exécution de la méthode update avec l'id: " + id);
+
 		Utilisateur utilisateurbdd=this.utilisateurRepository.findById(id).get();
 		Utilisateur utilisateur = new Utilisateur();
 		BeanUtils.copyProperties(request, utilisateurbdd);
 
 		this.utilisateurRepository.save(utilisateurbdd);
 
+		log.info("La méthode update a été exécutée avec succès");
 		return utilisateur.getId();
 	}
 
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.CREATED)
 	public String delete(@Valid @PathVariable("id") String id,@RequestBody UtilisateurRequest request) {
+
+		log.info("Exécution de la méthode delete avec l'id: " + id);
+
 		Optional<Utilisateur> utilisateurbdd=this.utilisateurRepository.findById(id);
 		Utilisateur utilisateur = new Utilisateur();
 		BeanUtils.copyProperties(request, utilisateurbdd);
 
 		this.utilisateurRepository.deleteById(id);
 
+		log.info("La méthode delete a été exécutée avec succès");
 		return utilisateur.getId();
 	}
 
@@ -110,51 +142,69 @@ public class UtilisateurApiController {
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
 	public String create(@Valid @RequestBody UtilisateurRequest request) {
+		
+		log.info("Exécution de la méthode create");
+		
 		Utilisateur utilisateur = new Utilisateur();
 
 		BeanUtils.copyProperties(request, utilisateur);
 
 		this.utilisateurRepository.save(utilisateur);
 
+		log.info("La méthode create a été exécutée avec succès");
 		return utilisateur.getId();
 	}
 
 	@PostMapping("/connexion")
 	public Utilisateur connexion(@Valid @RequestBody UtilisateurRequest request) {
-		Optional<Utilisateur> optUtilisateur = this.utilisateurRepository.findByEmailAndMotDePasse(request.getEmail(), request.getMotDePasse());
-
-			
 		
+		log.info("Exécution de la méthode connexion");
+		
+		Optional<Utilisateur> optUtilisateur = this.utilisateurRepository.findByEmailAndMotDePasse(request.getEmail(), request.getMotDePasse());
+	
 		if(!optUtilisateur.get().getEmail().equals(request.getEmail()) ) {
+
+			log.warn("Email inexistant dans la méthode connexion");
+
 			System.out.println("email inexistant !" + optUtilisateur.get().getEmail());
 
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
 		}
 		
 		if(!optUtilisateur.get().getMotDePasse().equals(request.getMotDePasse())) {
+			
+			log.warn("Mot de passe incorrect dans la méthode connexion");
 			System.out.println("mot de passe incorrect");
 
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
 			
 		}
 		if(optUtilisateur.isEmpty()) {
+			log.warn("Utilisateur non trouvé dans la méthode connexion");
+
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND);
 		}
 		
+		log.info("La méthode connexion a été exécutée avec succès");
 		return optUtilisateur.get();
 	}
 
 	@PostMapping("/inscription")
 	public Utilisateur inscription(@Valid @RequestBody UtilisateurRequest request) {
+		
+		log.info("Exécution de la méthode inscription");
+		
 		Optional<Utilisateur> optUtilisateur = this.utilisateurRepository.findByEmailAndMotDePasse(request.getEmail(), request.getMotDePasse());
 
 
 		if(optUtilisateur.get().getEmail().equals(request.getEmail())) {
 
+			log.warn("Email déjà existant dans la méthode inscription");
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
 		}
 		if(!request.getMotDePasse().equals(request.getConfirmMotDePasse())) {
 
+			log.warn("La confirmation du mot de passe ne correspond pas dans la méthode inscription");
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
 		}
 
@@ -166,6 +216,7 @@ public class UtilisateurApiController {
 
 		utilisateur = this.utilisateurRepository.save(utilisateur);
 
+		log.info("La méthode inscription a été exécutée avec succès");
 		return utilisateur;
 	}
 }

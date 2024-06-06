@@ -19,13 +19,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import fr.formation.model.Compte;
 import fr.formation.model.Note;
-import fr.formation.repository.CompteRepository;
 import fr.formation.repository.NoteRepository;
-import fr.formation.request.CompteRequest;
 import fr.formation.request.NoteRequest;
-import fr.formation.response.CompteResponse;
 import fr.formation.response.NoteResponse;
 
 
@@ -81,7 +77,7 @@ public class NoteApiController {
 		Optional<Note> note = this.noteRepository.findById(id);
 
 		if (note.isEmpty()) {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Id Compte inexistant");
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Id Note inexistant");
 		}
 
 		return note.get();
