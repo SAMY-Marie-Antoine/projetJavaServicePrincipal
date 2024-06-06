@@ -47,6 +47,7 @@ class UtilisateurApiControllerTest {
     public void beforeEach() {
         this.mockMvc = MockMvcBuilders.standaloneSetup(this.ctrl).build();
         this.mapper = new ObjectMapper();
+        this.mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
     }
 
     /**
