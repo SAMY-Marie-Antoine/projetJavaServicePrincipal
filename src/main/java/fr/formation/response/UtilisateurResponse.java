@@ -9,6 +9,7 @@ public class UtilisateurResponse {
 	private LocalDate dateDeNaissance;
 	private String email;
 	private String motDePasse;
+	private String confirmMotDePasse;
 	
 	public String getId() {
 		return id;
@@ -41,6 +42,11 @@ public class UtilisateurResponse {
 		this.motDePasse = motDePasse;
 	}
 	
-	
+	public String getConfirmMotDePasse() {
+		return confirmMotDePasse;
+	}
+	public void setConfirmMotDePasse(String confirmMotDePasse) {
+		this.confirmMotDePasse = confirmMotDePasse;
+	}
 
 }
