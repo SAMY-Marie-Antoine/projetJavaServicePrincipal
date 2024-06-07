@@ -91,6 +91,7 @@ public class UtilisateurApiControllerTest {
         request.setDateDeNaissance(LocalDate.of(2000, 1, 11));
         request.setEmail("test@example.com");
         request.setMotDePasse("password");
+        request.setConfirmMotDePasse("password");
 
         Mockito.when(this.repository.save(Mockito.any())).thenReturn(utilisateur);
 
@@ -107,6 +108,29 @@ public class UtilisateurApiControllerTest {
         result.andExpect(MockMvcResultMatchers.jsonPath("$.id").hasJsonPath());
 
         Mockito.verify(this.repository).save(Mockito.any());
+    }
+
+    // Teste la méthode inscription pour vérifier qu'elle retourne un statut HTTP 401 (Unauthorized) si les mots de passe ne correspondent pas
+    @Test
+    public void shouldReturnUnauthorizedWhenPasswordsDoNotMatch() throws Exception {
+        // given - préparer les données de test
+        InscriptionUtilisateurRequest request = new InscriptionUtilisateurRequest();
+        request.setNom("Hedieh");
+        request.setDateDeNaissance(LocalDate.of(2000, 1, 11));
+        request.setEmail("test@example.com");
+        request.setMotDePasse("password");
+        request.setConfirmMotDePasse("differentPassword"); // mots de passe ne correspondent pas
+
+        // when - effectuer une requête POST sur l'endpoint /inscription
+        ResultActions result = this.mockMvc.perform(
+            MockMvcRequestBuilders
+                .post(ENDPOINT + "/inscription")
+                .content(this.mapper.writeValueAsString(request))
+                .contentType(MediaType.APPLICATION_JSON)
+        );
+
+        // then - vérifier que le statut HTTP est 401 (Unauthorized)
+        result.andExpect(MockMvcResultMatchers.status().isUnauthorized());
     }
 
     // Teste la méthode inscription pour vérifier qu'elle retourne un statut HTTP 400 (Bad Request) pour les demandes invalides
@@ -132,6 +156,7 @@ public class UtilisateurApiControllerTest {
         result.andExpect(MockMvcResultMatchers.status().isBadRequest());
     }
 
+    // Fournit des données de test pour le test paramétré shouldCreateStatusBadRequest
     private static Stream<Arguments> provideCreateUtilisateurRequests() {
         return Stream.of(
             Arguments.of(null, LocalDate.of(2000, 1, 11), "test@example.com", "password"),
@@ -181,6 +206,19 @@ public class UtilisateurApiControllerTest {
         result.andExpect(MockMvcResultMatchers.status().isOk());
         result.andExpect(MockMvcResultMatchers.jsonPath("$.id").value("1"));
         result.andExpect(MockMvcResultMatchers.jsonPath("$.nom").value("Test User"));
+    }
+
+    // Teste la méthode findById pour vérifier qu'elle retourne un statut HTTP 404 (Not Found) si l'utilisateur n'existe pas
+    @Test
+    public void shouldNotFindById() throws Exception {
+        // given - préparer les données de test
+        Mockito.when(this.repository.findById("1")).thenReturn(Optional.empty());
+
+        // when - effectuer une requête GET sur l'endpoint /{id}
+        ResultActions result = this.mockMvc.perform(MockMvcRequestBuilders.get(ENDPOINT + "/1"));
+
+        // then - vérifier que le statut HTTP est 404 (Not Found)
+        result.andExpect(MockMvcResultMatchers.status().isNotFound());
     }
 
     // Teste la méthode update pour vérifier qu'elle met à jour les informations de l'utilisateur
@@ -271,6 +309,7 @@ public class UtilisateurApiControllerTest {
         InscriptionUtilisateurRequest request = new InscriptionUtilisateurRequest();
         request.setEmail("test@example.com");
         request.setMotDePasse("password");
+        request.setConfirmMotDePasse("password");
         request.setNom("Test User");
         request.setDateDeNaissance(LocalDate.of(2000, 1, 1));
 
@@ -279,6 +318,10 @@ public class UtilisateurApiControllerTest {
         utilisateur.setMotDePasse("password");
         utilisateur.setNom("Test User");
         utilisateur.setDateDeNaissance(LocalDate.of(2000, 1, 1));
+
+        // simulate that no existing user is found with the given email and password
+        Mockito.when(this.repository.findByEmailAndMotDePasse(request.getEmail(), request.getMotDePasse()))
+        .thenReturn(Optional.empty());
 
         Mockito.when(this.repository.save(Mockito.any())).thenReturn(utilisateur);
 

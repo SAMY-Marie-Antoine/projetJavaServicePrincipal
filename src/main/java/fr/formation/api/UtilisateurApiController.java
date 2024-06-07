@@ -203,6 +203,7 @@ public class UtilisateurApiController {
 	@ResponseStatus(HttpStatus.CREATED)
 	public InscriptionUtilisateurResponse inscription(@Valid @RequestBody InscriptionUtilisateurRequest request) {
 		
+		log.info("Exécution de la méthode inscription avec les détails: {}", request);
 		log.info("Exécution de la méthode inscription");
 		
 		Optional<Utilisateur> optUtilisateur = this.utilisateurRepository.findByEmailAndMotDePasse(request.getEmail(), request.getMotDePasse());
@@ -212,14 +213,15 @@ public class UtilisateurApiController {
 		if(optUtilisateur.isPresent()) {
 
 			log.warn("Email déjà existant dans la méthode inscription");
-			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Email déjà existant");
 		}
-		/*if(!request.getMotDePasse().equals(request.getConfirmMotDePasse())) {
+
+		if(!request.getMotDePasse().equals(request.getConfirmMotDePasse())) {
 
 			log.warn("La confirmation du mot de passe ne correspond pas dans la méthode inscription");
-			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "La confirmation du mot de passe ne correspond pas");
 		}
-		 */
+		 
       		
 		//Force du Mot de passe
 		/*String mdp = this.verificationFeignClient.getMotDePasseById(optUtilisateur.get().getMotDePasse());
