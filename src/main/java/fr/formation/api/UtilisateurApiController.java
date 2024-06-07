@@ -158,6 +158,9 @@ public class UtilisateurApiController {
 		//return utilisateur.getId();
 	}*/
 
+	
+
+	
 	@PostMapping("/connexion")
 	public Utilisateur connexion(@Valid @RequestBody LoginUtilisateurRequest request) {
 		
@@ -195,6 +198,7 @@ public class UtilisateurApiController {
 	}
 
 	@PostMapping("/inscription")
+	@ResponseStatus(HttpStatus.CREATED)
 	public InscriptionUtilisateurResponse inscription(@Valid @RequestBody InscriptionUtilisateurRequest request) {
 		
 		log.info("Exécution de la méthode inscription");
@@ -208,11 +212,11 @@ public class UtilisateurApiController {
 			log.warn("Email déjà existant dans la méthode inscription");
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
 		}
-		if(!request.getMotDePasse().equals(request.getConfirmMotDePasse())) {
+		/*if(!request.getMotDePasse().equals(request.getConfirmMotDePasse())) {
 
 			log.warn("La confirmation du mot de passe ne correspond pas dans la méthode inscription");
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
-		}
+		}*/
 		 
       		
 		//Force du Mot de passe
@@ -221,6 +225,12 @@ public class UtilisateurApiController {
         if (mdp != null) {
         	utilisateurResponse.setMotDePasse(mdp);
         }
+        
+        //Vulnerabilite
+         * 
+         * String mdp = this.verificationFeignClient.getMotDePasseVulnerableById(optUtilisateur.get().getMotDePasse());
+         * 
+         * 
 		;*/
 		
 		Utilisateur utilisateur = new Utilisateur();
