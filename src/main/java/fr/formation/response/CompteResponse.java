@@ -16,12 +16,7 @@ public class CompteResponse {
 	private String valeurMotdePassePlateforme;
 	private Utilisateur utilisateur;
 
-	public Utilisateur getUtilisateur() {
-		return utilisateur;
-	}
-	public void setUtilisateur(Utilisateur utilisateur) {
-		this.utilisateur = utilisateur;
-	}
+	
 	public String getId() {
 		return id;
 	}
@@ -70,5 +65,10 @@ public class CompteResponse {
 	public void setValeurMotdePassePlateforme(String valeurMotdePassePlateforme) {
 		this.valeurMotdePassePlateforme = valeurMotdePassePlateforme;
 	}
-
+	public Utilisateur getUtilisateur() {
+		return utilisateur;
+	}
+	public void setUtilisateur(Utilisateur utilisateur) {
+		this.utilisateur = utilisateur;
+	}
 }

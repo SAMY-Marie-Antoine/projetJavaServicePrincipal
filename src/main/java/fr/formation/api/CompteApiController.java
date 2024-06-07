@@ -29,6 +29,7 @@ import fr.formation.response.CompteResponse;
 @RequestMapping("/api/compte")
 @CrossOrigin("*")
 public class CompteApiController {
+
 	@Autowired
 	private CompteRepository compteRepository;
 
@@ -37,6 +38,7 @@ public class CompteApiController {
 
 	@GetMapping
 	public List<CompteResponse> findAll() {
+
 		List<Compte> comptes = this.compteRepository.findAll();
 		List<CompteResponse> response = new ArrayList<>();
 
@@ -118,4 +120,19 @@ public class CompteApiController {
 
 		return compte.getId();
 	}
+
+	//lister les comptes d'un utilisateur spécifique
+    @GetMapping("/user/{userId}")
+    public List<CompteResponse> findByUserId(@PathVariable String userId) {
+		
+        List<Compte> comptes = this.compteRepository.findByUtilisateurId(userId);
+        List<CompteResponse> response = new ArrayList<>();
+
+        for (Compte compte : comptes) {
+            CompteResponse compteResponse = new CompteResponse();
+            BeanUtils.copyProperties(compte, compteResponse);
+            response.add(compteResponse);
+        }
+        return response;
+    }
 }
