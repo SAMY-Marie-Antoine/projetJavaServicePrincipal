@@ -170,7 +170,6 @@ public class UtilisateurApiController {
 
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND);
 		}
-		
 	
 		if(!optUtilisateur.get().getEmail().equals(request.getEmail()) ) {
 
@@ -190,17 +189,17 @@ public class UtilisateurApiController {
 			
 		}
 		
+		
 		log.info("La méthode connexion a été exécutée avec succès");
 		return optUtilisateur.get();
 	}
 
 	@PostMapping("/inscription")
-	@ResponseStatus(HttpStatus.CREATED)
 	public InscriptionUtilisateurResponse inscription(@Valid @RequestBody InscriptionUtilisateurRequest request) {
 		
 		log.info("Exécution de la méthode inscription");
 		
-		Optional<Utilisateur> optUtilisateur = this.utilisateurRepository.findByEmail(request.getEmail());
+		Optional<Utilisateur> optUtilisateur = this.utilisateurRepository.findByEmailAndMotDePasse(request.getEmail(), request.getMotDePasse());
 		InscriptionUtilisateurResponse utilisateurResponse = new InscriptionUtilisateurResponse();
 		
 
@@ -209,7 +208,11 @@ public class UtilisateurApiController {
 			log.warn("Email déjà existant dans la méthode inscription");
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
 		}
-		
+		if(!request.getMotDePasse().equals(request.getConfirmMotDePasse())) {
+
+			log.warn("La confirmation du mot de passe ne correspond pas dans la méthode inscription");
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+		}
 		 
       		
 		//Force du Mot de passe
