@@ -19,9 +19,11 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import fr.formation.model.Compte;
 import fr.formation.model.Note;
 import fr.formation.repository.NoteRepository;
 import fr.formation.request.NoteRequest;
+import fr.formation.response.CompteResponse;
 import fr.formation.response.NoteResponse;
 
 
@@ -118,4 +120,19 @@ public class NoteApiController {
 
 		return note.getId();
 	}
+
+	//lister les notes d'un utilisateur spécifique
+    @GetMapping("/user/{userId}")
+    public List<NoteResponse> findByUserId(@PathVariable String userId) {
+		
+        List<Note> notes = this.noteRepository.findByUtilisateurId(userId);
+        List<NoteResponse> response = new ArrayList<>();
+
+        for (Note note : notes) {
+            NoteResponse noteResponse = new NoteResponse();
+            BeanUtils.copyProperties(note, noteResponse);
+            response.add(noteResponse);
+        }
+        return response;
+    }
 }

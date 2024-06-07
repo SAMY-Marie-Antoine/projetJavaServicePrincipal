@@ -1,22 +1,22 @@
 package fr.formation.response;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import fr.formation.model.Utilisateur;
 
 
 public class NoteResponse {
 
-
+	private String id;
 	private String nom;
 	private String description;
-	private LocalDate dateAjout;
-	private LocalDate dateModif;
+	private LocalDateTime dateAjout;
+	private LocalDateTime dateModif;
 	private String contenu;
 	private Utilisateur utilisateur;
 
-	private String id;
+	
 	public String getId() {
 		return id;
 	}

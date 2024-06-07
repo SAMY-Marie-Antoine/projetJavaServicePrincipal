@@ -1,6 +1,7 @@
 package fr.formation.response;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import fr.formation.model.Utilisateur;
 
@@ -9,8 +10,8 @@ public class CompteResponse {
 	private String id;
 	private String nom;
 	private String description;
-	private LocalDate dateAjout;
-	private LocalDate dateMAJ;
+	private LocalDateTime dateAjout;
+	private LocalDateTime dateMAJ;
 	private String nomUtilisateurPlateforme;
 	private String urlPlateforme;
 	private String valeurMotdePassePlateforme;
