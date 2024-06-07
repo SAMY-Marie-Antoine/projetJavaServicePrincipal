@@ -27,7 +27,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import fr.formation.model.Utilisateur;
 import fr.formation.repository.UtilisateurRepository;
-import fr.formation.request.UtilisateurRequest;
+import fr.formation.request.InscriptionUtilisateurRequest;
+import fr.formation.request.LoginUtilisateurRequest;
 
 @ExtendWith(MockitoExtension.class)
 public class UtilisateurApiControllerTest {
@@ -80,8 +81,8 @@ public class UtilisateurApiControllerTest {
     public void shouldCreateStatusCreated() throws Exception {
         // given
         Utilisateur utilisateur = new Utilisateur();
-        utilisateur.setId("1"); // Ajout H
-        UtilisateurRequest request = new UtilisateurRequest();
+        //utilisateur.setId("1"); // Ajout H
+        InscriptionUtilisateurRequest request = new InscriptionUtilisateurRequest();
 
         request.setNom("Hedieh");
         request.setDateDeNaissance(LocalDate.of(2000, 1, 11));
@@ -109,7 +110,7 @@ public class UtilisateurApiControllerTest {
     @MethodSource("provideCreateUtilisateurRequests")
     public void shouldCreateStatusBadRequest(String nom, LocalDate dateDeNaissance, String email, String motDePasse) throws Exception {
         
-        UtilisateurRequest request = new UtilisateurRequest();
+    	InscriptionUtilisateurRequest request = new InscriptionUtilisateurRequest();
         request.setNom(nom);
         request.setDateDeNaissance(dateDeNaissance);
         request.setEmail(email);

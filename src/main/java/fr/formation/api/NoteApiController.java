@@ -33,7 +33,7 @@ public class NoteApiController {
 	private NoteRepository noteRepository;
 
 	@Autowired
-	//private CommentaireFeignClient commentaireFeignClient;
+	//private VerificationFeignClient commentaireFeignClient;
 
 	@GetMapping
 	public List<NoteResponse> findAll() {

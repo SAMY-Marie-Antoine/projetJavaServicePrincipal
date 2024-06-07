@@ -21,10 +21,12 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import fr.formation.feignclient.VerificationFeignClient;
 import fr.formation.model.Utilisateur;
 import fr.formation.repository.UtilisateurRepository;
-import fr.formation.request.UtilisateurRequest;
-import fr.formation.response.UtilisateurResponse;
+import fr.formation.request.InscriptionUtilisateurRequest;
+import fr.formation.request.LoginUtilisateurRequest;
+import fr.formation.response.InscriptionUtilisateurResponse;
 import jakarta.validation.Valid;
 
 @RestController
@@ -38,7 +40,7 @@ public class UtilisateurApiController {
 	private UtilisateurRepository utilisateurRepository;
 
 	@Autowired
-	//private CommentaireFeignClient commentaireFeignClient;
+	private VerificationFeignClient verificationFeignClient;
 
 
 	public UtilisateurApiController(UtilisateurRepository utilisateurRepository) {
@@ -47,15 +49,15 @@ public class UtilisateurApiController {
 	}
 
 	@GetMapping
-	public List<UtilisateurResponse> findAll() {
+	public List<InscriptionUtilisateurResponse> findAll() {
 
 		log.info("Exécution de la méthode findAll");
 
 		List<Utilisateur> utilisateurs = this.utilisateurRepository.findAll();
-		List<UtilisateurResponse> response = new ArrayList<>();
+		List<InscriptionUtilisateurResponse> response = new ArrayList<>();
 
 		for (Utilisateur utilisateur : utilisateurs) {
-			UtilisateurResponse compteResponse = new UtilisateurResponse();
+			InscriptionUtilisateurResponse compteResponse = new InscriptionUtilisateurResponse();
 
 			BeanUtils.copyProperties(utilisateur, compteResponse);
 
@@ -107,7 +109,7 @@ public class UtilisateurApiController {
 
 	@PutMapping("/{id}")
 	@ResponseStatus(HttpStatus.CREATED)
-	public String update(@Valid @PathVariable("id") String id,@RequestBody UtilisateurRequest request) {
+	public String update(@Valid @PathVariable("id") String id,@RequestBody InscriptionUtilisateurRequest request) {
 
 		log.info("Exécution de la méthode update avec l'id: " + id);
 
@@ -123,7 +125,7 @@ public class UtilisateurApiController {
 
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.CREATED)
-	public String delete(@Valid @PathVariable("id") String id,@RequestBody UtilisateurRequest request) {
+	public String delete(@Valid @PathVariable("id") String id,@RequestBody InscriptionUtilisateurRequest request) {
 
 		log.info("Exécution de la méthode delete avec l'id: " + id);
 
@@ -139,9 +141,9 @@ public class UtilisateurApiController {
 
 
 
-	@PostMapping
+	/*@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-	public String create(@Valid @RequestBody UtilisateurRequest request) {
+	public EntityCreatedResponse create(@Valid @RequestBody LoginUtilisateurRequest request) {
 		
 		log.info("Exécution de la méthode create");
 		
@@ -152,11 +154,12 @@ public class UtilisateurApiController {
 		this.utilisateurRepository.save(utilisateur);
 
 		log.info("La méthode create a été exécutée avec succès");
-		return utilisateur.getId();
-	}
+		return new EntityCreatedResponse(utilisateur.getId());
+		//return utilisateur.getId();
+	}*/
 
 	@PostMapping("/connexion")
-	public Utilisateur connexion(@Valid @RequestBody UtilisateurRequest request) {
+	public Utilisateur connexion(@Valid @RequestBody LoginUtilisateurRequest request) {
 		
 		log.info("Exécution de la méthode connexion");
 		
@@ -190,12 +193,13 @@ public class UtilisateurApiController {
 	}
 
 	@PostMapping("/inscription")
-	public Utilisateur inscription(@Valid @RequestBody UtilisateurRequest request) {
+	public InscriptionUtilisateurResponse inscription(@Valid @RequestBody InscriptionUtilisateurRequest request) {
 		
 		log.info("Exécution de la méthode inscription");
 		
 		Optional<Utilisateur> optUtilisateur = this.utilisateurRepository.findByEmailAndMotDePasse(request.getEmail(), request.getMotDePasse());
-
+		InscriptionUtilisateurResponse utilisateurResponse = new InscriptionUtilisateurResponse();
+		
 
 		if(optUtilisateur.get().getEmail().equals(request.getEmail())) {
 
@@ -207,16 +211,26 @@ public class UtilisateurApiController {
 			log.warn("La confirmation du mot de passe ne correspond pas dans la méthode inscription");
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
 		}
+		 
+      		
+		//Force du Mot de passe
+		/*String mdp = this.verificationFeignClient.getMotDePasseById(optUtilisateur.get().getMotDePasse());
 
+        if (mdp != null) {
+        	utilisateurResponse.setMotDePasse(mdp);
+        }
+		;*/
+		
 		Utilisateur utilisateur = new Utilisateur();
 
 		BeanUtils.copyProperties(request, utilisateur); // copie les propriétés de même type et nom depuis inscriptionDTO vers utilisateur
 
 		utilisateur.setEmail(request.getEmail());
 
-		utilisateur = this.utilisateurRepository.save(utilisateur);
+		this.utilisateurRepository.save(utilisateur);
 
 		log.info("La méthode inscription a été exécutée avec succès");
-		return utilisateur;
+		//return utilisateur;
+		return new InscriptionUtilisateurResponse(utilisateur.getId());
 	}
 }

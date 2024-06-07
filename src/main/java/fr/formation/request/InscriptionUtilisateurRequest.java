@@ -1,22 +1,22 @@
-package fr.formation.response;
+package fr.formation.request;
 
 import java.time.LocalDate;
 
-public class UtilisateurResponse {
+import jakarta.validation.constraints.NotBlank;
 
-	private String id;
-	private String nom;
-	private LocalDate dateDeNaissance;
-	private String email;
-	private String motDePasse;
-	private String confirmMotDePasse;
+public class InscriptionUtilisateurRequest {
+	@NotBlank
+    private String nom;
+	@NotBlank
+    private LocalDate dateDeNaissance;
+	@NotBlank
+  	private String email;
+	@NotBlank
+  	private String motDePasse;
 	
-	public String getId() {
-		return id;
-	}
-	public void setId(String id) {
-		this.id = id;
-	}
+  	private String confirmMotDePasse;
+
+	
 	public String getNom() {
 		return nom;
 	}
@@ -48,5 +48,4 @@ public class UtilisateurResponse {
 	public void setConfirmMotDePasse(String confirmMotDePasse) {
 		this.confirmMotDePasse = confirmMotDePasse;
 	}
-
 }

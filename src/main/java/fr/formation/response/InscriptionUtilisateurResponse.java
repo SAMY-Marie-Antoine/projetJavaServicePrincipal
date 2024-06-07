@@ -1,17 +1,30 @@
-package fr.formation.request;
+package fr.formation.response;
 
 import java.time.LocalDate;
 
+public class InscriptionUtilisateurResponse {
 
-public class UtilisateurRequest {
+	private String id;
+	private String nom;
+	private LocalDate dateDeNaissance;
+	private String email;
+	private String motDePasse;
+	private String confirmMotDePasse;
 	
-    private String nom;
-    private LocalDate dateDeNaissance;
-  	private String email;
-  	private String motDePasse;
-  	private String confirmMotDePasse;
-
+	public InscriptionUtilisateurResponse() {
+		
+	}
 	
+	public InscriptionUtilisateurResponse(String id) {
+		this.id = id;
+	}
+	
+	public String getId() {
+		return id;
+	}
+	public void setId(String id) {
+		this.id = id;
+	}
 	public String getNom() {
 		return nom;
 	}
@@ -44,5 +57,4 @@ public class UtilisateurRequest {
 		this.confirmMotDePasse = confirmMotDePasse;
 	}
 
-    
 }

@@ -33,7 +33,7 @@ public class CompteApiController {
 	private CompteRepository compteRepository;
 
 	@Autowired
-	//private CommentaireFeignClient commentaireFeignClient;
+	//private VerificationFeignClient commentaireFeignClient;
 
 	@GetMapping
 	public List<CompteResponse> findAll() {
