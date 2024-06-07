@@ -6,6 +6,7 @@ public class LoginUtilisateurRequest {
 	
 	@NotBlank
   	private String email;
+	
 	@NotBlank
   	private String motDePasse;
 

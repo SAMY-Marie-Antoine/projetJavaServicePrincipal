@@ -51,6 +51,7 @@ public class UtilisateurApiControllerTest {
         this.mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
     }
 
+    // Teste la méthode findAll pour vérifier que le statut HTTP est 200 (OK)
     @Test
     public void shouldFindAllStatusOk() throws Exception {
         // given
@@ -62,6 +63,7 @@ public class UtilisateurApiControllerTest {
         result.andExpect(MockMvcResultMatchers.status().isOk());
     }
 
+    // Teste la méthode findAll pour vérifier qu'elle appelle bien le repository et retourne les utilisateurs
     @Test
     public void shouldFindAllCallsRepository() throws Exception {
         // given
@@ -77,11 +79,12 @@ public class UtilisateurApiControllerTest {
         Mockito.verify(this.repository).findAll();
     }
 
+    // Teste la méthode inscription pour vérifier que le statut HTTP est 201 (Created)
     @Test
     public void shouldCreateStatusCreated() throws Exception {
         // given
         Utilisateur utilisateur = new Utilisateur();
-        //utilisateur.setId("1"); // Ajout H
+        
         InscriptionUtilisateurRequest request = new InscriptionUtilisateurRequest();
 
         request.setNom("Hedieh");
@@ -106,23 +109,26 @@ public class UtilisateurApiControllerTest {
         Mockito.verify(this.repository).save(Mockito.any());
     }
 
+    // Teste la méthode inscription pour vérifier qu'elle retourne un statut HTTP 400 (Bad Request) pour les demandes invalides
     @ParameterizedTest
     @MethodSource("provideCreateUtilisateurRequests")
     public void shouldCreateStatusBadRequest(String nom, LocalDate dateDeNaissance, String email, String motDePasse) throws Exception {
-        
-    	InscriptionUtilisateurRequest request = new InscriptionUtilisateurRequest();
+        // given
+        InscriptionUtilisateurRequest request = new InscriptionUtilisateurRequest();
         request.setNom(nom);
         request.setDateDeNaissance(dateDeNaissance);
         request.setEmail(email);
         request.setMotDePasse(motDePasse);
 
+        // when
         ResultActions result = this.mockMvc.perform(
             MockMvcRequestBuilders
-                .post(ENDPOINT +"/inscription")
+                .post(ENDPOINT + "/inscription")
                 .content(this.mapper.writeValueAsString(request))
                 .contentType(MediaType.APPLICATION_JSON)
         );
 
+        // then
         result.andExpect(MockMvcResultMatchers.status().isBadRequest());
     }
 
@@ -140,17 +146,152 @@ public class UtilisateurApiControllerTest {
         );
     }
 
+    // Teste la méthode getNameById pour vérifier qu'elle retourne le nom de l'utilisateur pour un id donné
     @Test
     public void shouldReturnNameById() throws Exception {
+        // given
         Utilisateur utilisateur = new Utilisateur();
         utilisateur.setId("1");
         utilisateur.setNom("Test User");
 
         Mockito.when(this.repository.findById("1")).thenReturn(Optional.of(utilisateur));
 
+        // when
         ResultActions result = this.mockMvc.perform(MockMvcRequestBuilders.get(ENDPOINT + "/1/name"));
 
+        // then
         result.andExpect(MockMvcResultMatchers.status().isOk());
         result.andExpect(MockMvcResultMatchers.content().string("Test User"));
+    }
+
+    // Teste la méthode findById pour vérifier qu'elle retourne les informations de l'utilisateur pour un id donné    
+    @Test
+    public void shouldFindById() throws Exception {
+        // given
+        Utilisateur utilisateur = new Utilisateur();
+        utilisateur.setId("1");
+        utilisateur.setNom("Test User");
+
+        Mockito.when(this.repository.findById("1")).thenReturn(Optional.of(utilisateur));
+
+        // when
+        ResultActions result = this.mockMvc.perform(MockMvcRequestBuilders.get(ENDPOINT + "/1"));
+
+        // then
+        result.andExpect(MockMvcResultMatchers.status().isOk());
+        result.andExpect(MockMvcResultMatchers.jsonPath("$.id").value("1"));
+        result.andExpect(MockMvcResultMatchers.jsonPath("$.nom").value("Test User"));
+    }
+
+    // Teste la méthode update pour vérifier qu'elle met à jour les informations de l'utilisateur
+    @Test
+    public void shouldUpdate() throws Exception {
+        // given
+        Utilisateur utilisateur = new Utilisateur();
+        utilisateur.setId("1");
+        utilisateur.setNom("Test User");
+
+        InscriptionUtilisateurRequest request = new InscriptionUtilisateurRequest();
+        request.setNom("Updated User");
+
+        Mockito.when(this.repository.findById("1")).thenReturn(Optional.of(utilisateur));
+        Mockito.when(this.repository.save(Mockito.any())).thenReturn(utilisateur);
+
+        // when
+        ResultActions result = this.mockMvc.perform(
+            MockMvcRequestBuilders
+                .put(ENDPOINT + "/1")
+                .content(this.mapper.writeValueAsString(request))
+                .contentType(MediaType.APPLICATION_JSON)
+        );
+
+        // then
+        result.andExpect(MockMvcResultMatchers.status().isCreated());
+        Mockito.verify(this.repository).save(Mockito.any());
+    }
+
+    // Teste la méthode delete pour vérifier qu'elle supprime un utilisateur par id
+    @Test
+    public void shouldDelete() throws Exception {
+        // given
+        Utilisateur utilisateur = new Utilisateur();
+        utilisateur.setId("1");
+        utilisateur.setNom("Test User");
+
+        InscriptionUtilisateurRequest request = new InscriptionUtilisateurRequest();
+
+        Mockito.when(this.repository.findById("1")).thenReturn(Optional.of(utilisateur));
+
+        // when
+        ResultActions result = this.mockMvc.perform(
+            MockMvcRequestBuilders
+                .delete(ENDPOINT + "/1")
+                .content(this.mapper.writeValueAsString(request))
+                .contentType(MediaType.APPLICATION_JSON)
+        );
+
+        // then
+        result.andExpect(MockMvcResultMatchers.status().isCreated());
+        Mockito.verify(this.repository).deleteById("1");
+    }
+
+    // Teste la méthode connexion pour vérifier qu'elle connecte un utilisateur avec email et mot de passe valides
+    @Test
+    public void shouldConnexion() throws Exception {
+        // given
+        Utilisateur utilisateur = new Utilisateur();
+        utilisateur.setEmail("test@example.com");
+        utilisateur.setMotDePasse("password");
+
+        LoginUtilisateurRequest request = new LoginUtilisateurRequest();
+        request.setEmail("test@example.com");
+        request.setMotDePasse("password");
+
+        Mockito.when(this.repository.findByEmailAndMotDePasse("test@example.com", "password"))
+               .thenReturn(Optional.of(utilisateur));
+
+        // when
+        ResultActions result = this.mockMvc.perform(
+            MockMvcRequestBuilders
+                .post(ENDPOINT + "/connexion")
+                .content(this.mapper.writeValueAsString(request))
+                .contentType(MediaType.APPLICATION_JSON)
+        );
+
+        // then
+        result.andExpect(MockMvcResultMatchers.status().isOk());
+        result.andExpect(MockMvcResultMatchers.jsonPath("$.email").value("test@example.com"));
+        Mockito.verify(this.repository).findByEmailAndMotDePasse("test@example.com", "password");
+    }
+
+    // Teste la méthode inscription pour vérifier qu'elle inscrit un nouvel utilisateur
+    @Test
+    public void shouldInscription() throws Exception {
+        // given
+        InscriptionUtilisateurRequest request = new InscriptionUtilisateurRequest();
+        request.setEmail("test@example.com");
+        request.setMotDePasse("password");
+        request.setNom("Test User");
+        request.setDateDeNaissance(LocalDate.of(2000, 1, 1));
+
+        Utilisateur utilisateur = new Utilisateur();
+        utilisateur.setEmail("test@example.com");
+        utilisateur.setMotDePasse("password");
+        utilisateur.setNom("Test User");
+        utilisateur.setDateDeNaissance(LocalDate.of(2000, 1, 1));
+
+        Mockito.when(this.repository.save(Mockito.any())).thenReturn(utilisateur);
+
+        // when
+        ResultActions result = this.mockMvc.perform(
+            MockMvcRequestBuilders
+                .post(ENDPOINT + "/inscription")
+                .content(this.mapper.writeValueAsString(request))
+                .contentType(MediaType.APPLICATION_JSON)
+        );
+
+        // then
+        result.andExpect(MockMvcResultMatchers.status().isCreated());
+        Mockito.verify(this.repository).save(Mockito.any());
     }
 }
