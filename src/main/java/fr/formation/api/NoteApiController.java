@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,11 +21,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import fr.formation.model.Compte;
+
 import fr.formation.model.Note;
 import fr.formation.repository.NoteRepository;
 import fr.formation.request.NoteRequest;
-import fr.formation.response.CompteResponse;
 import fr.formation.response.NoteResponse;
 
 
@@ -31,14 +32,27 @@ import fr.formation.response.NoteResponse;
 @RequestMapping("/api/note")
 @CrossOrigin("*")
 public class NoteApiController {
+
+	private static final Logger log = LoggerFactory.getLogger(UtilisateurApiController.class);
+
 	@Autowired
 	private NoteRepository noteRepository;
 
 	@Autowired
 	//private VerificationFeignClient commentaireFeignClient;
 
+	public NoteApiController(NoteRepository noteRepository) {
+		this.noteRepository = noteRepository;
+		log.info("Initialisation de NoteApiController");
+
+	}
+
+
 	@GetMapping
 	public List<NoteResponse> findAll() {
+
+		log.info("Récupération de toutes les notes");
+
 		List<Note> notes = this.noteRepository.findAll();
 		List<NoteResponse> response = new ArrayList<>();
 
@@ -56,6 +70,8 @@ public class NoteApiController {
             }*/
 		}
 
+		log.info("La méthode findAll a été exécutée avec succès");
+		log.info("Renvoi de {} notes", response.size());
 		return response;
 	}
 
@@ -63,61 +79,78 @@ public class NoteApiController {
 
 	@GetMapping("/{id}/name")
 	public String getNameById(@PathVariable String id) {
+
+		log.info("Récupération du nom de la note avec l'id : {}", id);
+
 		Optional<Note> optNote = this.noteRepository.findById(id);
 
 		if (optNote.isPresent()) {
+			log.info("Note trouvée avec le nom : {}", optNote.get().getNom());
 			return optNote.get().getNom();
 		}
 
+		log.warn("Note non trouvée avec l'id : {}", id);
 		return "- note not found -";
 	}
 
 
-
 	@GetMapping("/{id}")
 	public Note findById(@PathVariable("id") String id) {
+		log.info("Récupération de la note avec l'id : {}", id);
+
 		Optional<Note> note = this.noteRepository.findById(id);
 
 		if (note.isEmpty()) {
+			log.error("Note non trouvée avec l'id : {}", id);
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Id Note inexistant");
 		}
-
+		log.info("Note trouvée : {}", note.get());
 		return note.get();
 	}
 
 	@PutMapping("/{id}")
 	@ResponseStatus(HttpStatus.CREATED)
 	public String update(@PathVariable("id") String id,@RequestBody NoteRequest request) {
+		
+		log.info("Mise à jour de la note avec l'id : {}", id);
+		
 		Note notebdd=this.noteRepository.findById(id).get();
 		Note note = new Note();
 		BeanUtils.copyProperties(request, notebdd);
 
 		this.noteRepository.save(notebdd);
 
+		log.info("Note mise à jour avec l'id : {}", notebdd.getId());
 		return note.getId();
 	}
 
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.CREATED)
-	public String delete(@PathVariable("id") String id,@RequestBody NoteRequest request) {
-		Optional<Note> notebdd=this.noteRepository.findById(id);
-		Note note = new Note();
-		BeanUtils.copyProperties(request, notebdd);
+	public String delete(@PathVariable("id") String id) {
+		
+		log.info("Suppression de la note avec l'id : {}", id);
+		Optional<Note> notebdd = this.noteRepository.findById(id);
+
+		if (notebdd.isEmpty()) {
+			log.error("Note non trouvée avec l'id : {}", id);
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Id Note inexistant");
+		}
 
 		this.noteRepository.deleteById(id);
-
-		return note.getId();
+		log.info("Note supprimée avec l'id : {}", id);
+		return id;
 	}
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
 	public String create(@RequestBody NoteRequest request) {
+		
+		log.info("Création d'une nouvelle note");
 		Note note = new Note();
-
 		BeanUtils.copyProperties(request, note);
-
 		this.noteRepository.save(note);
 
+		log.info("Note créée avec l'id : {}", note.getId());
 		return note.getId();
 	}
 
@@ -125,6 +158,8 @@ public class NoteApiController {
     @GetMapping("/user/{userId}")
     public List<NoteResponse> findByUserId(@PathVariable String userId) {
 		
+		log.info("Récupération des notes pour l'utilisateur avec l'id : {}", userId);
+
         List<Note> notes = this.noteRepository.findByUtilisateurId(userId);
         List<NoteResponse> response = new ArrayList<>();
 
@@ -133,6 +168,8 @@ public class NoteApiController {
             BeanUtils.copyProperties(note, noteResponse);
             response.add(noteResponse);
         }
+
+		log.info("Renvoi de {} notes pour l'utilisateur avec l'id : {}", response.size(), userId);
         return response;
     }
 }

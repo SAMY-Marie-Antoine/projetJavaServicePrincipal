@@ -1,6 +1,5 @@
 package fr.formation.response;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import fr.formation.model.Utilisateur;
@@ -16,8 +15,15 @@ public class CompteResponse {
 	private String urlPlateforme;
 	private String valeurMotdePassePlateforme;
 	private Utilisateur utilisateur;
-
 	
+	public CompteResponse() {
+	}
+	
+	public CompteResponse(String id) {
+		this.id = id;
+	}
+
+
 	public String getId() {
 		return id;
 	}
@@ -36,16 +42,16 @@ public class CompteResponse {
 	public void setDescription(String description) {
 		this.description = description;
 	}
-	public LocalDate getDateAjout() {
+	public LocalDateTime getDateAjout() {
 		return dateAjout;
 	}
-	public void setDateAjout(LocalDate dateAjout) {
+	public void setDateAjout(LocalDateTime dateAjout) {
 		this.dateAjout = dateAjout;
 	}
-	public LocalDate getDateMAJ() {
+	public LocalDateTime getDateMAJ() {
 		return dateMAJ;
 	}
-	public void setDateMAJ(LocalDate dateMAJ) {
+	public void setDateMAJ(LocalDateTime dateMAJ) {
 		this.dateMAJ = dateMAJ;
 	}
 	public String getNomUtilisateurPlateforme() {

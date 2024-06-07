@@ -3,12 +3,20 @@ package fr.formation.request;
 import java.time.LocalDateTime;
 
 import fr.formation.model.Utilisateur;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 
 public class NoteRequest {
 	
+	@NotBlank(message = "Le nom ne peut pas être vide")
     private String nom;
+	
+	@Size(max = 255, message = "La description ne doit pas dépasser 255 caractères")
     private String description;
+
+	@NotNull(message = "La date d'ajout ne peut pas être nulle")
     private LocalDateTime dateAjout;
     private LocalDateTime dateModif;
   	private String contenu;

@@ -1,6 +1,5 @@
 package fr.formation.response;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import fr.formation.model.Utilisateur;
@@ -15,8 +14,15 @@ public class NoteResponse {
 	private LocalDateTime dateModif;
 	private String contenu;
 	private Utilisateur utilisateur;
-
+		
+	public NoteResponse() {
+	}
 	
+	public NoteResponse(String id) {
+		this.id = id;
+	}
+
+
 	public String getId() {
 		return id;
 	}
@@ -35,16 +41,16 @@ public class NoteResponse {
 	public void setDescription(String description) {
 		this.description = description;
 	}
-	public LocalDate getDateAjout() {
+	public LocalDateTime getDateAjout() {
 		return dateAjout;
 	}
-	public void setDateAjout(LocalDate dateAjout) {
+	public void setDateAjout(LocalDateTime dateAjout) {
 		this.dateAjout = dateAjout;
 	}
-	public LocalDate getDateModif() {
+	public LocalDateTime getDateModif() {
 		return dateModif;
 	}
-	public void setDateModif(LocalDate dateModif) {
+	public void setDateModif(LocalDateTime dateModif) {
 		this.dateModif = dateModif;
 	}
 	public String getContenu() {

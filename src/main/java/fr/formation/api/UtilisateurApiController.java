@@ -142,26 +142,6 @@ public class UtilisateurApiController {
 	}
 
 
-	/*@PostMapping
-	@ResponseStatus(HttpStatus.CREATED)
-	public EntityCreatedResponse create(@Valid @RequestBody LoginUtilisateurRequest request) {
-		
-		log.info("Exécution de la méthode create");
-		
-		Utilisateur utilisateur = new Utilisateur();
-
-		BeanUtils.copyProperties(request, utilisateur);
-
-		this.utilisateurRepository.save(utilisateur);
-
-		log.info("La méthode create a été exécutée avec succès");
-		return new EntityCreatedResponse(utilisateur.getId());
-		//return utilisateur.getId();
-	}*/
-
-	
-
-	
 	@PostMapping("/connexion")
 	public Utilisateur connexion(@Valid @RequestBody LoginUtilisateurRequest request) {
 		
