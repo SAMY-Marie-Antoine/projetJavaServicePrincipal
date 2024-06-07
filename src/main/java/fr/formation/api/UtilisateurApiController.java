@@ -218,8 +218,8 @@ public class UtilisateurApiController {
 
 			log.warn("La confirmation du mot de passe ne correspond pas dans la méthode inscription");
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
-		}*/
-		 
+		}
+		 */
       		
 		//Force du Mot de passe
 		/*String mdp = this.verificationFeignClient.getMotDePasseById(optUtilisateur.get().getMotDePasse());
