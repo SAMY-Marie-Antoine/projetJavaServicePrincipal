@@ -1,11 +1,14 @@
 package fr.formation.request;
 
+import jakarta.validation.constraints.NotBlank;
+
 public class LoginUtilisateurRequest {
 	
-
+	@NotBlank
   	private String email;
+	@NotBlank
   	private String motDePasse;
-  
+
 	public String getEmail() {
 		return email;
 	}

@@ -94,7 +94,7 @@ public class UtilisateurApiControllerTest {
         // when
         ResultActions result = this.mockMvc.perform(
             MockMvcRequestBuilders
-                .post(ENDPOINT)
+                .post(ENDPOINT +"/inscription" )
                 .content(this.mapper.writeValueAsString(request))
                 .contentType(MediaType.APPLICATION_JSON)
         );
@@ -118,7 +118,7 @@ public class UtilisateurApiControllerTest {
 
         ResultActions result = this.mockMvc.perform(
             MockMvcRequestBuilders
-                .post(ENDPOINT)
+                .post(ENDPOINT +"/inscription")
                 .content(this.mapper.writeValueAsString(request))
                 .contentType(MediaType.APPLICATION_JSON)
         );

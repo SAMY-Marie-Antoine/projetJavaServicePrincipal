@@ -3,11 +3,12 @@ package fr.formation.request;
 import java.time.LocalDate;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 public class InscriptionUtilisateurRequest {
 	@NotBlank
     private String nom;
-	@NotBlank
+	@NotNull
     private LocalDate dateDeNaissance;
 	@NotBlank
   	private String email;

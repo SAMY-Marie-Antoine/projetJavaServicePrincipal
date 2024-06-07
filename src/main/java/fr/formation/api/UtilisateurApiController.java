@@ -164,6 +164,13 @@ public class UtilisateurApiController {
 		log.info("Exécution de la méthode connexion");
 		
 		Optional<Utilisateur> optUtilisateur = this.utilisateurRepository.findByEmailAndMotDePasse(request.getEmail(), request.getMotDePasse());
+		
+		if(optUtilisateur.isEmpty()) {
+			log.warn("Utilisateur non trouvé dans la méthode connexion");
+
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+		}
+		
 	
 		if(!optUtilisateur.get().getEmail().equals(request.getEmail()) ) {
 
@@ -182,35 +189,27 @@ public class UtilisateurApiController {
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
 			
 		}
-		if(optUtilisateur.isEmpty()) {
-			log.warn("Utilisateur non trouvé dans la méthode connexion");
-
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-		}
 		
 		log.info("La méthode connexion a été exécutée avec succès");
 		return optUtilisateur.get();
 	}
 
 	@PostMapping("/inscription")
+	@ResponseStatus(HttpStatus.CREATED)
 	public InscriptionUtilisateurResponse inscription(@Valid @RequestBody InscriptionUtilisateurRequest request) {
 		
 		log.info("Exécution de la méthode inscription");
 		
-		Optional<Utilisateur> optUtilisateur = this.utilisateurRepository.findByEmailAndMotDePasse(request.getEmail(), request.getMotDePasse());
+		Optional<Utilisateur> optUtilisateur = this.utilisateurRepository.findByEmail(request.getEmail());
 		InscriptionUtilisateurResponse utilisateurResponse = new InscriptionUtilisateurResponse();
 		
 
-		if(optUtilisateur.get().getEmail().equals(request.getEmail())) {
+		if(optUtilisateur.isPresent()) {
 
 			log.warn("Email déjà existant dans la méthode inscription");
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
 		}
-		if(!request.getMotDePasse().equals(request.getConfirmMotDePasse())) {
-
-			log.warn("La confirmation du mot de passe ne correspond pas dans la méthode inscription");
-			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
-		}
+		
 		 
       		
 		//Force du Mot de passe
