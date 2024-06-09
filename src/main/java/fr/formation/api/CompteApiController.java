@@ -38,7 +38,7 @@ public class CompteApiController {
 	private CompteRepository compteRepository;
 
 	@Autowired
-	//private VerificationFeignClient commentaireFeignClient;
+	//private VerificationFeignClient verificationFeignClient;
 
 	
 	public CompteApiController(CompteRepository compteRepository) {
