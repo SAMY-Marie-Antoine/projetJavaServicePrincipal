@@ -25,6 +25,7 @@ import fr.formation.model.Compte;
 import fr.formation.repository.CompteRepository;
 import fr.formation.request.CreateCompteRequest;
 import fr.formation.response.CompteResponse;
+import jakarta.validation.Valid;
 
 
 @RestController
@@ -67,7 +68,7 @@ public class CompteApiController {
 
 
 	@GetMapping("/{id}/name")
-	public String getNameById(@PathVariable String id) {
+	public String getNameById(@Valid @PathVariable String id) {
 
 		log.info("Recherche du nom du compte avec l'ID : {}", id);
 		Optional<Compte> optCompte = this.compteRepository.findById(id);
@@ -83,7 +84,7 @@ public class CompteApiController {
 
 
 	@GetMapping("/{id}")
-	public Compte findById(@PathVariable("id") String id) {
+	public Compte findById(@Valid @PathVariable("id") String id) {
 		log.info("Recherche du compte avec l'ID : {}", id);
 		Optional<Compte> compte = this.compteRepository.findById(id);
 
@@ -98,7 +99,7 @@ public class CompteApiController {
 
 	@PutMapping("/{id}")
 	@ResponseStatus(HttpStatus.CREATED)
-	public String update(@PathVariable("id") String id,@RequestBody CreateCompteRequest request) {
+	public String update(@Valid @PathVariable("id") String id,@RequestBody CreateCompteRequest request) {
 		
 		log.info("Mise à jour du compte avec l'ID : {}", id);
 		
@@ -114,7 +115,7 @@ public class CompteApiController {
 
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.CREATED)
-	public String delete(@PathVariable("id") String id) {
+	public String delete(@Valid @PathVariable("id") String id) {
 		
 		log.info("Suppression du compte avec l'ID : {}", id);
 		
@@ -134,7 +135,7 @@ public class CompteApiController {
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-	public String create(@RequestBody CreateCompteRequest request) {
+	public String create(@Valid @RequestBody CreateCompteRequest request) {
 		
 		log.info("Création d'un nouveau compte");
 		Compte compte = new Compte();
@@ -149,7 +150,7 @@ public class CompteApiController {
 
 	//lister les comptes d'un utilisateur spécifique
     @GetMapping("/user/{userId}")
-    public List<CompteResponse> findByUserId(@PathVariable String userId) {
+    public List<CompteResponse> findByUserId(@Valid @PathVariable String userId) {
 		
 		log.info("Recherche des comptes pour l'utilisateur avec l'ID : {}", userId);
         

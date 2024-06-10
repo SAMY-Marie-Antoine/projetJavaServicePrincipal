@@ -8,8 +8,9 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 
-public class NoteRequest {
+public class CreateNoteRequest {
 	
+	@NotNull
 	@NotBlank(message = "Le nom ne peut pas être vide")
     private String nom;
 	
@@ -18,8 +19,10 @@ public class NoteRequest {
 
 	@NotNull(message = "La date d'ajout ne peut pas être nulle")
     private LocalDateTime dateAjout;
+
     private LocalDateTime dateModif;
   	private String contenu;
+	
 	private Utilisateur utilisateur;
 	
 	public String getNom() {

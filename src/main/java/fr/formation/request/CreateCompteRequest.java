@@ -11,6 +11,7 @@ import jakarta.validation.constraints.Size;
 
 public class CreateCompteRequest {
 
+	@NotNull
 	@NotBlank(message = "Le nom ne peut pas être vide")
 	private String nom;
 	private String description;
@@ -18,6 +19,7 @@ public class CreateCompteRequest {
 	@NotNull(message = "La date d'ajout ne peut pas être nulle")
 	private LocalDateTime dateAjout;
 	private LocalDateTime dateMAJ;
+
 	private String nomUtilisateurPlateforme;
 	private String urlPlateforme;
 

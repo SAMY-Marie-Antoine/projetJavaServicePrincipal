@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,8 +25,9 @@ import org.springframework.web.server.ResponseStatusException;
 
 import fr.formation.model.Note;
 import fr.formation.repository.NoteRepository;
-import fr.formation.request.NoteRequest;
+import fr.formation.request.CreateNoteRequest;
 import fr.formation.response.NoteResponse;
+import jakarta.validation.Valid;
 
 
 @RestController
@@ -78,7 +80,7 @@ public class NoteApiController {
 
 
 	@GetMapping("/{id}/name")
-	public String getNameById(@PathVariable String id) {
+	public String getNameById(@Valid @PathVariable String id) {
 
 		log.info("Récupération du nom de la note avec l'id : {}", id);
 
@@ -95,7 +97,7 @@ public class NoteApiController {
 
 
 	@GetMapping("/{id}")
-	public Note findById(@PathVariable("id") String id) {
+	public Note findById(@Valid @PathVariable("id") String id) {
 		log.info("Récupération de la note avec l'id : {}", id);
 
 		Optional<Note> note = this.noteRepository.findById(id);
@@ -110,9 +112,24 @@ public class NoteApiController {
 
 	@PutMapping("/{id}")
 	@ResponseStatus(HttpStatus.CREATED)
-	public String update(@PathVariable("id") String id,@RequestBody NoteRequest request) {
+	public ResponseEntity<String> update(@Valid @PathVariable("id") String id, @RequestBody CreateNoteRequest request) {
+	//public String update(@Valid @PathVariable("id") String id,@RequestBody CreateNoteRequest request) {
 		
-		log.info("Mise à jour de la note avec l'id : {}", id);
+		Optional<Note> optionalNote = this.noteRepository.findById(id);
+    if (!optionalNote.isPresent()) {
+        log.warn("Note not found with id: {}", id);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Note not found with id: " + id);
+    }
+
+    Note notebdd = optionalNote.get();
+    BeanUtils.copyProperties(request, notebdd);
+
+    this.noteRepository.save(notebdd);
+
+    log.info("Note mise à jour avec l'id : {}", notebdd.getId());
+    return ResponseEntity.status(HttpStatus.CREATED).body(notebdd.getId());
+
+		/*log.info("Mise à jour de la note avec l'id : {}", id);
 		
 		Note notebdd=this.noteRepository.findById(id).get();
 		Note note = new Note();
@@ -121,12 +138,12 @@ public class NoteApiController {
 		this.noteRepository.save(notebdd);
 
 		log.info("Note mise à jour avec l'id : {}", notebdd.getId());
-		return note.getId();
+		return note.getId();*/
 	}
 
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.CREATED)
-	public String delete(@PathVariable("id") String id) {
+	public String delete(@Valid @PathVariable("id") String id) {
 		
 		log.info("Suppression de la note avec l'id : {}", id);
 		Optional<Note> notebdd = this.noteRepository.findById(id);
@@ -143,11 +160,12 @@ public class NoteApiController {
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-	public String create(@RequestBody NoteRequest request) {
+	public String create(@Valid @RequestBody CreateNoteRequest request) {
 		
 		log.info("Création d'une nouvelle note");
 		Note note = new Note();
 		BeanUtils.copyProperties(request, note);
+
 		this.noteRepository.save(note);
 
 		log.info("Note créée avec l'id : {}", note.getId());
@@ -156,7 +174,7 @@ public class NoteApiController {
 
 	//lister les notes d'un utilisateur spécifique
     @GetMapping("/user/{userId}")
-    public List<NoteResponse> findByUserId(@PathVariable String userId) {
+    public List<NoteResponse> findByUserId(@Valid @PathVariable String userId) {
 		
 		log.info("Récupération des notes pour l'utilisateur avec l'id : {}", userId);
 
