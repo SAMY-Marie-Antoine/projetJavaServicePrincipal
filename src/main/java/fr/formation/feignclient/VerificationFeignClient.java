@@ -19,9 +19,11 @@ public interface VerificationFeignClient {
     @GetMapping("/mot-de-passe/vulnerable/{motDePasse}")
     String getMotDePasseVulnerableById(@PathVariable("motDePasse") String motDePasse);
 
-    @GetMapping("/mot-de-passe/force")
+    /*@GetMapping("/mot-de-passe/force")
     int getForceMotDePasse(@RequestParam("motDePasse") String motDePasse);
-
+    */
+    @GetMapping("/mot-de-passe/force/{motDePasse}")
+    int getForceMotDePasse(@PathVariable("motDePasse") String motDePasse);
 
     @Component
     public static class Fallback implements VerificationFeignClient {

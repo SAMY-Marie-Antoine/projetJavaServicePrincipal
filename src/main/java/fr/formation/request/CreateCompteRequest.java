@@ -16,15 +16,15 @@ public class CreateCompteRequest {
 	private String nom;
 	private String description;
 	
-	@NotNull(message = "La date d'ajout ne peut pas être nulle")
+	//@NotNull(message = "La date d'ajout ne peut pas être nulle")
 	private LocalDateTime dateAjout;
 	private LocalDateTime dateMAJ;
 
 	private String nomUtilisateurPlateforme;
 	private String urlPlateforme;
 
-	@NotBlank(message = "Le mot de passe ne peut pas être vide")
-    @Size(max = 512, message = "Le mot de passe ne peut pas dépasser 512 caractères")
+	//@NotBlank(message = "Le mot de passe ne peut pas être vide")
+    //@Size(max = 512, message = "Le mot de passe ne peut pas dépasser 512 caractères")
 	private String valeurMotdePassePlateforme;
 	
 	private Utilisateur utilisateur;
