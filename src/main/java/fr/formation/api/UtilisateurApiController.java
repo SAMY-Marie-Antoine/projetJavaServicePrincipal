@@ -24,7 +24,11 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import fr.formation.feignclient.VerificationFeignClient;
+import fr.formation.model.Compte;
+import fr.formation.model.Note;
 import fr.formation.model.Utilisateur;
+import fr.formation.repository.CompteRepository;
+import fr.formation.repository.NoteRepository;
 import fr.formation.repository.UtilisateurRepository;
 import fr.formation.request.InscriptionUtilisateurRequest;
 import fr.formation.request.LoginUtilisateurRequest;
@@ -40,6 +44,12 @@ public class UtilisateurApiController {
 
 	@Autowired
 	private UtilisateurRepository utilisateurRepository;
+
+	@Autowired
+	private NoteRepository noteRepository;
+
+	@Autowired
+	private CompteRepository compteRepository;
 
 	@Autowired
 	private VerificationFeignClient verificationFeignClient;
@@ -59,21 +69,28 @@ public class UtilisateurApiController {
 		List<InscriptionUtilisateurResponse> response = new ArrayList<>();
 
 		for (Utilisateur utilisateur : utilisateurs) {
-			InscriptionUtilisateurResponse compteResponse = new InscriptionUtilisateurResponse();
+			InscriptionUtilisateurResponse utilisateurResponse = new InscriptionUtilisateurResponse();
+			BeanUtils.copyProperties(utilisateur, utilisateurResponse);
+			
+			// Appel à serviceVerification pour obtenir la force du mot de passe
+			int forceMotDePasse = this.verificationFeignClient.getForceMotDePasse(utilisateur.getMotDePasse());
+			
+			// Ajoutez la force du mot de passe à la réponse
+			utilisateurResponse.setForceMotDePasse(forceMotDePasse);
 
-			BeanUtils.copyProperties(utilisateur, compteResponse);
+			// Récupérer les notes sécurisées de l'utilisateur
+			List<Note> notes = this.noteRepository.findByUtilisateurId(utilisateur.getId());
+			utilisateurResponse.setNotes(notes);
 
-			response.add(compteResponse);
+			// Récupérer les comptes de l'utilisateur
+			List<Compte> comptes = this.compteRepository.findByUtilisateurId(utilisateur.getId());
+			utilisateurResponse.setComptes(comptes);
 
-			/*Integer note = this.commentaireFeignClient.getNoteByProduitId(compte.getId());
+			response.add(utilisateurResponse);
+    }
 
-            if (note != null) {
-            	compteResponse.setNote(note);
-            }*/
-		}
-
-		log.info("La méthode findAll a été exécutée avec succès");
-		return response;
+    log.info("La méthode findAll a été exécutée avec succès");
+    return response;
 	}
 
 
@@ -115,14 +132,26 @@ public class UtilisateurApiController {
 
 		log.info("Exécution de la méthode update avec l'id: " + id);
 
-		Utilisateur utilisateurbdd=this.utilisateurRepository.findById(id).get();
-		Utilisateur utilisateur = new Utilisateur();
+		//Utilisateur utilisateurbdd=this.utilisateurRepository.findById(id).get();
+		
+		Utilisateur utilisateurbdd = this.utilisateurRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Id Utilisateur inexistant"));
+
+		// Utilisation de Feign pour vérifier la vulnérabilité du mot de passe
+        String motDePasseVulnerable = this.verificationFeignClient.getMotDePasseVulnerableById(request.getMotDePasse());
+        if (motDePasseVulnerable != null) {
+            log.warn("Le mot de passe est vulnérable dans la méthode update");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est vulnérable");
+        }
+
+		//Utilisateur utilisateur = new Utilisateur();
 		BeanUtils.copyProperties(request, utilisateurbdd);
 
 		this.utilisateurRepository.save(utilisateurbdd);
 
 		log.info("La méthode update a été exécutée avec succès");
-		return utilisateur.getId();
+		//return utilisateur.getId();
+		return utilisateurbdd.getId();
 	}
 
 	@DeleteMapping("/{id}")
@@ -184,49 +213,39 @@ public class UtilisateurApiController {
 	public InscriptionUtilisateurResponse inscription(@Valid @RequestBody InscriptionUtilisateurRequest request) {
 		
 		log.info("Exécution de la méthode inscription avec les détails: {}", request);
-		log.info("Exécution de la méthode inscription");
-		
-		Optional<Utilisateur> optUtilisateur = this.utilisateurRepository.findByEmailAndMotDePasse(request.getEmail(), request.getMotDePasse());
-		InscriptionUtilisateurResponse utilisateurResponse = new InscriptionUtilisateurResponse();
-		
 
-		if(optUtilisateur.isPresent()) {
-
-			log.warn("Email déjà existant dans la méthode inscription");
-			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Email déjà existant");
-		}
-
-		if(!request.getMotDePasse().equals(request.getConfirmMotDePasse())) {
-
-			log.warn("La confirmation du mot de passe ne correspond pas dans la méthode inscription");
-			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "La confirmation du mot de passe ne correspond pas");
-		}
-		 
-      		
-		//Force du Mot de passe
-		/*String mdp = this.verificationFeignClient.getMotDePasseById(optUtilisateur.get().getMotDePasse());
-
-        if (mdp != null) {
-        	utilisateurResponse.setMotDePasse(mdp);
+        Optional<Utilisateur> optUtilisateur = this.utilisateurRepository.findByEmail(request.getEmail());
+        if (optUtilisateur.isPresent()) {
+            log.warn("Email déjà existant dans la méthode inscription");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Email déjà existant");
         }
-        
-        //Vulnerabilite
-         * 
-         * String mdp = this.verificationFeignClient.getMotDePasseVulnerableById(optUtilisateur.get().getMotDePasse());
-         * 
-         * 
-		;*/
-		
-		Utilisateur utilisateur = new Utilisateur();
 
-		BeanUtils.copyProperties(request, utilisateur); // copie les propriétés de même type et nom depuis inscriptionDTO vers utilisateur
+        if (!request.getMotDePasse().equals(request.getConfirmMotDePasse())) {
+            log.warn("La confirmation du mot de passe ne correspond pas dans la méthode inscription");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "La confirmation du mot de passe ne correspond pas");
+        }
 
-		utilisateur.setEmail(request.getEmail());
+        // Utilisation de Feign pour vérifier la vulnérabilité du mot de passe
+        String motDePasseVulnerable = this.verificationFeignClient.getMotDePasseVulnerableById(request.getMotDePasse());
+        if (motDePasseVulnerable != null) {
+            log.warn("Le mot de passe est vulnérable dans la méthode inscription");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est vulnérable");
+        }
 
-		this.utilisateurRepository.save(utilisateur);
+        // Utilisation de Feign pour vérifier la force du mot de passe
+        int force = this.verificationFeignClient.getForceMotDePasse(request.getMotDePasse());
+        if (force < 3) { // Supposons que la force minimale acceptable soit 3
+            log.warn("Le mot de passe est trop faible dans la méthode inscription");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est trop faible");
+        }
 
-		log.info("La méthode inscription a été exécutée avec succès");
-		//return utilisateur;
-		return new InscriptionUtilisateurResponse(utilisateur.getId());
-	}
+        Utilisateur utilisateur = new Utilisateur();
+        BeanUtils.copyProperties(request, utilisateur);
+
+        this.utilisateurRepository.save(utilisateur);
+
+        log.info("La méthode inscription a été exécutée avec succès");
+        return new InscriptionUtilisateurResponse(utilisateur.getId());
+    }
+
 }

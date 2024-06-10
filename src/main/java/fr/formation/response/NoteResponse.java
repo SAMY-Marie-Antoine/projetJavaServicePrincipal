@@ -13,7 +13,8 @@ public class NoteResponse {
 	private LocalDateTime dateAjout;
 	private LocalDateTime dateModif;
 	private String contenu;
-	private Utilisateur utilisateur;
+	private String utilisateurId; 
+	//private Utilisateur utilisateur;
 		
 	public NoteResponse() {
 	}
@@ -59,13 +60,22 @@ public class NoteResponse {
 	public void setContenu(String contenu) {
 		this.contenu = contenu;
 	}
-	public Utilisateur getUtilisateur() {
+	/*public Utilisateur getUtilisateur() {
 		return utilisateur;
 	}
 	public void setUtilisateur(Utilisateur utilisateur) {
 		this.utilisateur = utilisateur;
+	}*/
+
+	public String getUtilisateurId() {
+		return utilisateurId;
 	}
 
+	public void setUtilisateurId(String utilisateurId) {
+		this.utilisateurId = utilisateurId;
+	}
+
+	
 
 
 

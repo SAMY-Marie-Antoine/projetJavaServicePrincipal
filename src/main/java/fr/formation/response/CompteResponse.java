@@ -14,7 +14,8 @@ public class CompteResponse {
 	private String nomUtilisateurPlateforme;
 	private String urlPlateforme;
 	private String valeurMotdePassePlateforme;
-	private Utilisateur utilisateur;
+	//private Utilisateur utilisateur; //eviter le pb de ref circulaire de la serialisation JSON
+	private String utilisateurId;
 	
 	public CompteResponse() {
 	}
@@ -72,10 +73,19 @@ public class CompteResponse {
 	public void setValeurMotdePassePlateforme(String valeurMotdePassePlateforme) {
 		this.valeurMotdePassePlateforme = valeurMotdePassePlateforme;
 	}
-	public Utilisateur getUtilisateur() {
+	/*public Utilisateur getUtilisateur() {
 		return utilisateur;
 	}
 	public void setUtilisateur(Utilisateur utilisateur) {
 		this.utilisateur = utilisateur;
+	}*/
+
+	public String getUtilisateurId() {
+		return utilisateurId;
 	}
+
+	public void setUtilisateurId(String utilisateurId) {
+		this.utilisateurId = utilisateurId;
+	}
+	
 }

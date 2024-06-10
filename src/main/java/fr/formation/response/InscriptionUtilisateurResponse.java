@@ -1,6 +1,10 @@
 package fr.formation.response;
 
 import java.time.LocalDate;
+import java.util.List;
+
+import fr.formation.model.Compte;
+import fr.formation.model.Note;
 
 public class InscriptionUtilisateurResponse {
 
@@ -10,6 +14,10 @@ public class InscriptionUtilisateurResponse {
 	private String email;
 	private String motDePasse;
 	private String confirmMotDePasse;
+	private int forceMotDePasse;
+
+	private List<Note> notes; // Ajoutez cette ligne
+	private List<Compte> comptes; // Ajoutez cette ligne
 	
 	public InscriptionUtilisateurResponse() {
 		
@@ -56,5 +64,30 @@ public class InscriptionUtilisateurResponse {
 	public void setConfirmMotDePasse(String confirmMotDePasse) {
 		this.confirmMotDePasse = confirmMotDePasse;
 	}
+
+	public int getForceMotDePasse() {
+		return forceMotDePasse;
+	}
+
+	public void setForceMotDePasse(int forceMotDePasse) {
+		this.forceMotDePasse = forceMotDePasse;
+	}
+
+	public List<Note> getNotes() {
+		return notes;
+	}
+
+	public void setNotes(List<Note> notes) {
+		this.notes = notes;
+	}
+
+	public List<Compte> getComptes() {
+		return comptes;
+	}
+
+	public void setComptes(List<Compte> comptes) {
+		this.comptes = comptes;
+	}
+	
 
 }
