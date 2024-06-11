@@ -22,6 +22,9 @@ public class InscriptionUtilisateurRequest {
 	
   	private String confirmMotDePasse;
 
+  	public InscriptionUtilisateurRequest() {
+		// TODO Auto-generated constructor stub
+	}
 	
 	public String getNom() {
 		return nom;

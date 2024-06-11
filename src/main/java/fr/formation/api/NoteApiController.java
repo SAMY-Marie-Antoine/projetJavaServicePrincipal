@@ -24,7 +24,9 @@ import org.springframework.web.server.ResponseStatusException;
 
 
 import fr.formation.model.Note;
+import fr.formation.model.Utilisateur;
 import fr.formation.repository.NoteRepository;
+import fr.formation.repository.UtilisateurRepository;
 import fr.formation.request.CreateNoteRequest;
 import fr.formation.response.NoteResponse;
 import jakarta.validation.Valid;
@@ -39,6 +41,9 @@ public class NoteApiController {
 
 	@Autowired
 	private NoteRepository noteRepository;
+	
+	@Autowired
+	private UtilisateurRepository utilisateurRepository;
 
 	@Autowired
 	//private VerificationFeignClient commentaireFeignClient;
@@ -110,6 +115,9 @@ public class NoteApiController {
 		return note.get();
 	}
 
+	
+
+	
 	@PutMapping("/{id}")
 	@ResponseStatus(HttpStatus.CREATED)
 	public ResponseEntity<String> update(@Valid @PathVariable("id") String id, @RequestBody CreateNoteRequest request) {

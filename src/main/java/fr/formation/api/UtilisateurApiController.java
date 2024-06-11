@@ -42,8 +42,8 @@ public class UtilisateurApiController {
 
 	private static final Logger log = LoggerFactory.getLogger(UtilisateurApiController.class);
 
-	@Autowired
-	private UtilisateurRepository utilisateurRepository;
+	//@Autowired
+	private final UtilisateurRepository utilisateurRepository;
 
 	@Autowired
 	private NoteRepository noteRepository;
@@ -54,7 +54,7 @@ public class UtilisateurApiController {
 	@Autowired
 	private VerificationFeignClient verificationFeignClient;
 
-
+	//@Autowired
 	public UtilisateurApiController(UtilisateurRepository utilisateurRepository) {
 		this.utilisateurRepository = utilisateurRepository;
 		log.info("Initialisation de UtilisateurApiController");
@@ -73,7 +73,7 @@ public class UtilisateurApiController {
 			BeanUtils.copyProperties(utilisateur, utilisateurResponse);
 			
 			// Appel à serviceVerification pour obtenir la force du mot de passe
-			int forceMotDePasse = this.verificationFeignClient.getForceMotDePasse(utilisateur.getMotDePasse());
+			boolean forceMotDePasse = this.verificationFeignClient.getForceMotDePasse(utilisateur.getMotDePasse());
 			
 			// Ajoutez la force du mot de passe à la réponse
 			utilisateurResponse.setForceMotDePasse(forceMotDePasse);
@@ -137,11 +137,11 @@ public class UtilisateurApiController {
 		Utilisateur utilisateurbdd = this.utilisateurRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Id Utilisateur inexistant"));
 
-		// Utilisation de Feign pour vérifier la vulnérabilité du mot de passe
-        String motDePasseVulnerable = this.verificationFeignClient.getMotDePasseVulnerableById(request.getMotDePasse());
-        if (motDePasseVulnerable != null) {
-            log.warn("Le mot de passe est vulnérable dans la méthode update");
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est vulnérable");
+		// Utilisation de Feign pour vérifier  si le mot de passe est Compromis
+        boolean motDePasseCompromis = this.verificationFeignClient.getMotDePasseCompromis(request.getMotDePasse());
+        if (!motDePasseCompromis ) {
+            log.warn("Le mot de passe est Compromis dans la méthode update");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est Compromis");
         }
 
 		//Utilisateur utilisateur = new Utilisateur();
@@ -226,18 +226,18 @@ public class UtilisateurApiController {
         }
 
         // Utilisation de Feign pour vérifier la vulnérabilité du mot de passe
-        String motDePasseVulnerable = this.verificationFeignClient.getMotDePasseVulnerableById(request.getMotDePasse());
-        if (motDePasseVulnerable != null) {
-            log.warn("Le mot de passe est vulnérable dans la méthode inscription");
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est vulnérable");
-        }
+       boolean motDePasseCompromis=this.verificationFeignClient.getMotDePasseCompromis(request.getMotDePasse());
+       if (!motDePasseCompromis ) {
+           log.warn("Le mot de passe est compromis dans la méthode inscription");
+           throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est compromis");
+       }
 
         // Utilisation de Feign pour vérifier la force du mot de passe
-        int force = this.verificationFeignClient.getForceMotDePasse(request.getMotDePasse());
-        if (force < 3) { // Supposons que la force minimale acceptable soit 3
-            log.warn("Le mot de passe est trop faible dans la méthode inscription");
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est trop faible");
-        }
+       boolean motDePasseForce=this.verificationFeignClient.getForceMotDePasse(request.getMotDePasse());
+       if (!motDePasseForce ) {
+           log.warn("Le mot de passe est faible dans la méthode inscription");
+           throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est faible");
+       }
 
         Utilisateur utilisateur = new Utilisateur();
         BeanUtils.copyProperties(request, utilisateur);
