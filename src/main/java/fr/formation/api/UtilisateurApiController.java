@@ -33,6 +33,7 @@ import fr.formation.repository.UtilisateurRepository;
 import fr.formation.request.InscriptionUtilisateurRequest;
 import fr.formation.request.LoginUtilisateurRequest;
 import fr.formation.response.InscriptionUtilisateurResponse;
+import fr.formation.service.MotDePasseService;
 import jakarta.validation.Valid;
 
 @RestController
@@ -42,7 +43,7 @@ public class UtilisateurApiController {
 
 	private static final Logger log = LoggerFactory.getLogger(UtilisateurApiController.class);
 
-	//@Autowired
+	
 	private final UtilisateurRepository utilisateurRepository;
 
 	@Autowired
@@ -54,7 +55,10 @@ public class UtilisateurApiController {
 	@Autowired
 	private VerificationFeignClient verificationFeignClient;
 
-	//@Autowired
+	@Autowired
+	private MotDePasseService motDePasseService; 
+
+	//@Autowired //a enlever selon notre decision 
 	public UtilisateurApiController(UtilisateurRepository utilisateurRepository) {
 		this.utilisateurRepository = utilisateurRepository;
 		log.info("Initialisation de UtilisateurApiController");
@@ -131,26 +135,16 @@ public class UtilisateurApiController {
 	public String update(@Valid @PathVariable("id") String id,@RequestBody InscriptionUtilisateurRequest request) {
 
 		log.info("Exécution de la méthode update avec l'id: " + id);
-
-		//Utilisateur utilisateurbdd=this.utilisateurRepository.findById(id).get();
 		
 		Utilisateur utilisateurbdd = this.utilisateurRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Id Utilisateur inexistant"));
 
-		// Utilisation de Feign pour vérifier  si le mot de passe est Compromis
-        boolean motDePasseCompromis = this.verificationFeignClient.getMotDePasseCompromis(request.getMotDePasse());
-        if (!motDePasseCompromis ) {
-            log.warn("Le mot de passe est Compromis dans la méthode update");
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est Compromis");
-        }
-
-		//Utilisateur utilisateur = new Utilisateur();
+		
 		BeanUtils.copyProperties(request, utilisateurbdd);
 
 		this.utilisateurRepository.save(utilisateurbdd);
 
 		log.info("La méthode update a été exécutée avec succès");
-		//return utilisateur.getId();
 		return utilisateurbdd.getId();
 	}
 
@@ -192,8 +186,7 @@ public class UtilisateurApiController {
 
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
 		}
-		
-		
+				
 		if(!optUtilisateur.get().getMotDePasse().equals(request.getMotDePasse())) {
 			
 			log.warn("Mot de passe incorrect dans la méthode connexion");
@@ -202,8 +195,7 @@ public class UtilisateurApiController {
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
 			
 		}
-		
-		
+				
 		log.info("La méthode connexion a été exécutée avec succès");
 		return optUtilisateur.get();
 	}
@@ -241,6 +233,9 @@ public class UtilisateurApiController {
 
         Utilisateur utilisateur = new Utilisateur();
         BeanUtils.copyProperties(request, utilisateur);
+		
+		// Crypter le mot de passe avant de l'enregistrer
+        utilisateur.setMotDePasse(motDePasseService.crypterMotDePasse(request.getMotDePasse()));
 
         this.utilisateurRepository.save(utilisateur);
 

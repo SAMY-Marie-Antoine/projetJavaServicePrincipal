@@ -16,14 +16,14 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @FeignClient(value = "projetJavaServiceVerification", path = "/api/verification", fallback = VerificationFeignClient.Fallback.class)
 public interface VerificationFeignClient {
     
-	 @GetMapping("/generateMotDePasseFort")
-	    public String generateMotDePasseFort();
+	@GetMapping("/generateMotDePasseFort")
+	public String generateMotDePasseFort();
 	    
-	    @PostMapping("/mot-de-passe/compromis")
-	    boolean getMotDePasseCompromis(@RequestBody String motDePasse);
+	@PostMapping("/mot-de-passe/compromis")
+	boolean getMotDePasseCompromis(@RequestBody String motDePasse);
 
-	    @PostMapping("/mot-de-passe/force")
-	    boolean getForceMotDePasse(@RequestBody String motDePasse);
+	@PostMapping("/mot-de-passe/force")
+	boolean getForceMotDePasse(@RequestBody String motDePasse);
 
     @Component
     public static class Fallback implements VerificationFeignClient {

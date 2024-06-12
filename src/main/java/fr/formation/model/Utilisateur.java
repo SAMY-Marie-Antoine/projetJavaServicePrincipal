@@ -14,8 +14,6 @@ import jakarta.persistence.Transient;
 @Table(name = "utilisateur")
 public class Utilisateur {
 
-
-
 	@Id
 	@UuidGenerator
 	private String id;
@@ -29,7 +27,7 @@ public class Utilisateur {
 	@Column(name="email")
 	private String email;
 
-	@Column(name="mot_de_passe")
+	@Column(name="mot_de_passe", length = 512)
 	private String motDePasse;
 
 	@Transient
