@@ -14,6 +14,15 @@ public class CompteResponse {
 	private String nomUtilisateurPlateforme;
 	private String urlPlateforme;
 	private String valeurMotdePassePlateforme;
+	private String cle;
+	public String getCle() {
+		return cle;
+	}
+
+	public void setCle(String cle) {
+		this.cle = cle;
+	}
+
 	//private Utilisateur utilisateur; //eviter le pb de ref circulaire de la serialisation JSON
 	private String utilisateurId;
 	

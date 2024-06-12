@@ -28,8 +28,14 @@ public class CreateCompteRequest {
 	private String valeurMotdePassePlateforme;
 	
 	private Utilisateur utilisateur;
+	private String cle;
 	
-	
+	public String getCle() {
+		return cle;
+	}
+	public void setCle(String cle) {
+		this.cle = cle;
+	}
 	public Utilisateur getUtilisateur() {
 		return utilisateur;
 	}

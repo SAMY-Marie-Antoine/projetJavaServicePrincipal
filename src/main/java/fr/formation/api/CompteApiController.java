@@ -1,8 +1,18 @@
 package fr.formation.api;
 
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,10 +31,13 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import fr.formation.feignclient.VerificationFeignClient;
 import fr.formation.model.Compte;
 import fr.formation.repository.CompteRepository;
 import fr.formation.request.CreateCompteRequest;
 import fr.formation.response.CompteResponse;
+import fr.formation.service.ValeurMotDePasseCompteService;
+import fr.formation.service.ValeurMotDePasseCompteServiceDecryptage;
 import jakarta.validation.Valid;
 
 
@@ -39,9 +52,12 @@ public class CompteApiController {
 	private CompteRepository compteRepository;
 
 	@Autowired
-	//private VerificationFeignClient verificationFeignClient;
+	private VerificationFeignClient verificationFeignClient;
 
-	
+	@Autowired
+	private ValeurMotDePasseCompteService valeurMotDePasseCompteService;
+
+
 	public CompteApiController(CompteRepository compteRepository) {
 
 		this.compteRepository = compteRepository;
@@ -100,71 +116,106 @@ public class CompteApiController {
 	@PutMapping("/{id}")
 	@ResponseStatus(HttpStatus.CREATED)
 	public String update(@Valid @PathVariable("id") String id,@RequestBody CreateCompteRequest request) {
-		
+
 		log.info("Mise à jour du compte avec l'ID : {}", id);
-		
+
 		Compte comptebdd=this.compteRepository.findById(id).get();
 		Compte compte = new Compte();
 		BeanUtils.copyProperties(request, comptebdd);
 
 		this.compteRepository.save(comptebdd);
 
-        log.info("Compte mis à jour avec succès pour l'ID : {}", id);
+		log.info("Compte mis à jour avec succès pour l'ID : {}", id);
 		return compte.getId();
 	}
 
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.CREATED)
 	public String delete(@Valid @PathVariable("id") String id) {
-		
+
 		log.info("Suppression du compte avec l'ID : {}", id);
-		
+
 		Optional<Compte> comptebdd=this.compteRepository.findById(id);
-		
+
 		if (comptebdd.isEmpty()) {
 			log.error("Compte non trouvée avec l'id : {}", id);
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Id Note inexistant");
 		}
 
-		
+
 		this.compteRepository.deleteById(id);
 
-        log.info("Compte supprimé avec succès pour l'ID : {}", id);
+		log.info("Compte supprimé avec succès pour l'ID : {}", id);
 		return id;
 	}
 
 	//demande de verification à coder 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-	public String create(@Valid @RequestBody CreateCompteRequest request) {
-		
+	public String create(@Valid @RequestBody CreateCompteRequest request) throws NoSuchAlgorithmException, InvalidKeyException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException, IllegalBlockSizeException {
+
 		log.info("Création d'un nouveau compte");
 		Compte compte = new Compte();
-
 		BeanUtils.copyProperties(request, compte);
-
+		
+		
+		//Traitement generate cle
+		SecretKey cleInter=valeurMotDePasseCompteService.generateKey(0);
+		String cle=valeurMotDePasseCompteService.convertSecretKeyToString(cleInter);
+		
+		//Stockage base cle en string
+		compte.setCle(cle);
+				
+		byte[]retour=valeurMotDePasseCompteService.encrypter(request.getValeurMotdePassePlateforme(), cleInter);
+		
+		//Stockage base du mdp en string
+		compte.setValeurMotdePassePlateforme(Base64.getEncoder().encodeToString(retour));
+		
 		this.compteRepository.save(compte);
-
+	
 		log.info("Nouveau compte créé avec succès, ID : {}", compte.getId());
 		return compte.getId();
 	}
 
-	//lister les comptes d'un utilisateur spécifique
-    @GetMapping("/user/{userId}")
-    public List<CompteResponse> findByUserId(@Valid @PathVariable String userId) {
-		
-		log.info("Recherche des comptes pour l'utilisateur avec l'ID : {}", userId);
-        
-		List<Compte> comptes = this.compteRepository.findByUtilisateurId(userId);
-        List<CompteResponse> response = new ArrayList<>();
 
-        for (Compte compte : comptes) {
-            CompteResponse compteResponse = new CompteResponse();
-            BeanUtils.copyProperties(compte, compteResponse);
-            response.add(compteResponse);
-        }
+	@GetMapping("/{id}")
+	public String decyptById(@Valid @PathVariable("id") String id) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException {
+		log.info("Recherche du compte avec l'ID : {}", id);
+		Optional<Compte> optCompte = this.compteRepository.findById(id);
+	
+		if (optCompte.isEmpty()) {
+			log.warn("Aucun compte trouvé pour l'ID : {}", id);
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Id Compte inexistant");
+		}
+		
+		//Traitement conversion de la cle Sring BDD vers SecretKey
+		SecretKey cleInter=ValeurMotDePasseCompteServiceDecryptage.convertStringToSecretKeyto(optCompte.get().getCle());
+		//Traitement conversion de la ValeurMotdePassePlateforme Sring BDD vers Byte
+		byte[] donnees=optCompte.get().getValeurMotdePassePlateforme().getBytes();
+		//Traitement decryptage de la ValeurMotdePassePlateforme		
+		String motDePasseDecrypt=ValeurMotDePasseCompteServiceDecryptage.decrypter(donnees, cleInter);
+	
+		log.info("Compte trouvé pour l'ID : {}", id);
+		return motDePasseDecrypt;
+	}
+
+
+	//lister les comptes d'un utilisateur spécifique
+	@GetMapping("/user/{userId}")
+	public List<CompteResponse> findByUserId(@Valid @PathVariable String userId) {
+
+		log.info("Recherche des comptes pour l'utilisateur avec l'ID : {}", userId);
+
+		List<Compte> comptes = this.compteRepository.findByUtilisateurId(userId);
+		List<CompteResponse> response = new ArrayList<>();
+
+		for (Compte compte : comptes) {
+			CompteResponse compteResponse = new CompteResponse();
+			BeanUtils.copyProperties(compte, compteResponse);
+			response.add(compteResponse);
+		}
 
 		log.info("Comptes de l'utilisateur avec l'ID : {} récupérés avec succès", userId);
-        return response;
-    }
+		return response;
+	}
 }

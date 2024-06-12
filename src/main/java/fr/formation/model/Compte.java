@@ -40,6 +40,14 @@ public class Compte {
 	@Column(name="valeur_motde_passe_plateforme", length = 512, nullable = false)
 	private String valeurMotdePassePlateforme;
 	
+	private String cle;
+	
+	public String getCle() {
+		return cle;
+	}
+	public void setCle(String cle) {
+		this.cle = cle;
+	}
 	@ManyToOne()
 	private Utilisateur utilisateur ;
 
