@@ -227,6 +227,7 @@ public class UtilisateurApiController {
        if (motDePasseForce ) {
            log.warn("Le mot de passe est faible dans la méthode inscription");
            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est faible");
+           
        }
 
         Utilisateur utilisateur = new Utilisateur();
