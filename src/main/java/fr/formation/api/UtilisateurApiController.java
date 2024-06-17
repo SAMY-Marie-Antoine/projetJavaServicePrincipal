@@ -4,13 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.kafka.common.errors.ResourceNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,7 +31,7 @@ import fr.formation.repository.UtilisateurRepository;
 import fr.formation.request.InscriptionUtilisateurRequest;
 import fr.formation.request.LoginUtilisateurRequest;
 import fr.formation.response.InscriptionUtilisateurResponse;
-import fr.formation.service.MotDePasseService;
+import fr.formation.service.MotDePasseUtilisateurService;
 import jakarta.validation.Valid;
 
 @RestController
@@ -56,7 +54,7 @@ public class UtilisateurApiController {
 	private VerificationFeignClient verificationFeignClient;
 
 	@Autowired
-	private MotDePasseService motDePasseService; 
+	private MotDePasseUtilisateurService motDePasseUtilisateurService;
 
 	//@Autowired //a enlever selon notre decision 
 	public UtilisateurApiController(UtilisateurRepository utilisateurRepository) {
@@ -219,14 +217,14 @@ public class UtilisateurApiController {
 
         // Utilisation de Feign pour vérifier la vulnérabilité du mot de passe
        boolean motDePasseCompromis=this.verificationFeignClient.getMotDePasseCompromis(request.getMotDePasse());
-       if (!motDePasseCompromis ) {
+       if (motDePasseCompromis ) {
            log.warn("Le mot de passe est compromis dans la méthode inscription");
            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est compromis");
        }
 
         // Utilisation de Feign pour vérifier la force du mot de passe
        boolean motDePasseForce=this.verificationFeignClient.getForceMotDePasse(request.getMotDePasse());
-       if (!motDePasseForce ) {
+       if (motDePasseForce ) {
            log.warn("Le mot de passe est faible dans la méthode inscription");
            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est faible");
        }
@@ -235,7 +233,7 @@ public class UtilisateurApiController {
         BeanUtils.copyProperties(request, utilisateur);
 		
 		// Crypter le mot de passe avant de l'enregistrer
-        utilisateur.setMotDePasse(motDePasseService.crypterMotDePasse(request.getMotDePasse()));
+        utilisateur.setMotDePasse(motDePasseUtilisateurService.crypterMotDePasse(request.getMotDePasse()));
 
         this.utilisateurRepository.save(utilisateur);
 

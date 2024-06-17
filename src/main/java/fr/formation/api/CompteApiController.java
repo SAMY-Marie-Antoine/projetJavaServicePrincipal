@@ -3,6 +3,7 @@ package fr.formation.api;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -155,46 +156,64 @@ public class CompteApiController {
 	public String create(@Valid @RequestBody CreateCompteRequest request) throws NoSuchAlgorithmException, InvalidKeyException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException, IllegalBlockSizeException {
 
 		log.info("Création d'un nouveau compte");
+		log.info("Exécution de la méthode Creation du Compte avec les détails: {}", request);
+		// Utilisation de Feign pour vérifier la vulnérabilité du mot de passe
+		boolean motDePasseCompromis=this.verificationFeignClient.getMotDePasseCompromis(request.getValeurMotdePassePlateforme());
+		if (motDePasseCompromis ) {
+			log.warn("Le mot de passe est compromis dans la méthode inscription");
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est compromis");
+		}
+
+		// Utilisation de Feign pour vérifier la force du mot de passe
+		boolean motDePasseForce=this.verificationFeignClient.getForceMotDePasse(request.getValeurMotdePassePlateforme());
+		if (motDePasseForce ) {
+			log.warn("Le mot de passe est faible dans la méthode inscription");
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est faible");
+		}
 		Compte compte = new Compte();
 		BeanUtils.copyProperties(request, compte);
 		
-		
+		compte.setDateAjout(LocalDateTime.now());
+		compte.setDateMAJ(LocalDateTime.now());
+
 		//Traitement generate cle
 		SecretKey cleInter=valeurMotDePasseCompteService.generateKey(0);
 		String cle=valeurMotDePasseCompteService.convertSecretKeyToString(cleInter);
-		
+
 		//Stockage base cle en string
 		compte.setCle(cle);
-				
-		byte[]retour=valeurMotDePasseCompteService.encrypter(request.getValeurMotdePassePlateforme(), cleInter);
+		System.out.println("clé =" + cle);
 		
+
+		byte[]retour=valeurMotDePasseCompteService.encrypter(request.getValeurMotdePassePlateforme(), cleInter);
+
 		//Stockage base du mdp en string
 		compte.setValeurMotdePassePlateforme(Base64.getEncoder().encodeToString(retour));
-		
+
 		this.compteRepository.save(compte);
-	
+
 		log.info("Nouveau compte créé avec succès, ID : {}", compte.getId());
 		return compte.getId();
 	}
 
 
-	@GetMapping("/{id}")
-	public String decyptById(@Valid @PathVariable("id") String id) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException {
+	@GetMapping("cryptage/{id}")
+	public String decypt(@Valid @PathVariable("id") String id) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException {
 		log.info("Recherche du compte avec l'ID : {}", id);
 		Optional<Compte> optCompte = this.compteRepository.findById(id);
-	
+
 		if (optCompte.isEmpty()) {
 			log.warn("Aucun compte trouvé pour l'ID : {}", id);
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Id Compte inexistant");
 		}
-		
+
 		//Traitement conversion de la cle Sring BDD vers SecretKey
 		SecretKey cleInter=ValeurMotDePasseCompteServiceDecryptage.convertStringToSecretKeyto(optCompte.get().getCle());
 		//Traitement conversion de la ValeurMotdePassePlateforme Sring BDD vers Byte
 		byte[] donnees=optCompte.get().getValeurMotdePassePlateforme().getBytes();
 		//Traitement decryptage de la ValeurMotdePassePlateforme		
 		String motDePasseDecrypt=ValeurMotDePasseCompteServiceDecryptage.decrypter(donnees, cleInter);
-	
+
 		log.info("Compte trouvé pour l'ID : {}", id);
 		return motDePasseDecrypt;
 	}
