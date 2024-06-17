@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,7 +16,9 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -25,10 +28,12 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import fr.formation.feignclient.VerificationFeignClient;
 import fr.formation.model.Utilisateur;
 import fr.formation.repository.UtilisateurRepository;
 import fr.formation.request.InscriptionUtilisateurRequest;
 import fr.formation.request.LoginUtilisateurRequest;
+import fr.formation.service.MotDePasseUtilisateurService;
 
 @ExtendWith(MockitoExtension.class)
 public class UtilisateurApiControllerTest {
@@ -41,14 +46,26 @@ public class UtilisateurApiControllerTest {
     @Mock
     private UtilisateurRepository repository;
 
+    @Mock
+    private MotDePasseUtilisateurService motDePasseUtilisateurService;
+
+    @Mock
+    private VerificationFeignClient verificationFeignClient;
+
     @InjectMocks
     private UtilisateurApiController ctrl;
 
     @BeforeEach
     public void beforeEach() {
+        
         this.mockMvc = MockMvcBuilders.standaloneSetup(this.ctrl).build();
         this.mapper = new ObjectMapper();
         this.mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+    }
+
+    @AfterEach
+        public void afterEach() {
+        Mockito.reset(verificationFeignClient);
     }
 
     // Teste la méthode findAll pour vérifier que le statut HTTP est 200 (OK)
@@ -320,10 +337,29 @@ public class UtilisateurApiControllerTest {
         utilisateur.setDateDeNaissance(LocalDate.of(2000, 1, 1));
 
         // simulate that no existing user is found with the given email and password
-        Mockito.when(this.repository.findByEmailAndMotDePasse(request.getEmail(), request.getMotDePasse()))
+        /*Mockito.when(this.repository.findByEmailAndMotDePasse(request.getEmail(), request.getMotDePasse()))
+        .thenReturn(Optional.empty());*/
+
+       // Mockito.when(this.repository.save(Mockito.any())).thenReturn(utilisateur);
+
+        // modification : simuler qu'aucun utilisateur existant n'est trouvé avec l'email donné
+        Mockito.when(this.repository.findByEmail(request.getEmail()))
         .thenReturn(Optional.empty());
 
-        Mockito.when(this.repository.save(Mockito.any())).thenReturn(utilisateur);
+        // modification : simuler les réponses des clients Feign
+        Mockito.when(this.verificationFeignClient.getMotDePasseCompromis(request.getMotDePasse()))
+        .thenReturn(false);  // mot de passe non compromis
+
+        Mockito.when(this.verificationFeignClient.getForceMotDePasse(request.getMotDePasse()))
+        .thenReturn(true);  // mot de passe fort
+
+        // modification : simuler le hachage du mot de passe
+        Mockito.when(this.motDePasseUtilisateurService.crypterMotDePasse(request.getMotDePasse()))
+        .thenReturn("hashed_password");
+
+        // modification : simuler l'enregistrement de l'utilisateur
+        Mockito.when(this.repository.save(Mockito.any(Utilisateur.class)))
+        .thenReturn(utilisateur);
 
         // when
         ResultActions result = this.mockMvc.perform(
@@ -336,5 +372,12 @@ public class UtilisateurApiControllerTest {
         // then
         result.andExpect(MockMvcResultMatchers.status().isCreated());
         Mockito.verify(this.repository).save(Mockito.any());
+
+        // modification : vérifier que les méthodes des clients Feign ont été appelées
+    Mockito.verify(this.verificationFeignClient).getMotDePasseCompromis(request.getMotDePasse());
+    Mockito.verify(this.verificationFeignClient).getForceMotDePasse(request.getMotDePasse());
+
+    // modification : vérifier que le service de hachage de mot de passe a été appelé
+    Mockito.verify(this.motDePasseUtilisateurService).crypterMotDePasse(request.getMotDePasse());
     }
 }
