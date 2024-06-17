@@ -10,8 +10,8 @@ public interface CompteRepository extends JpaRepository<Compte, String> {
 
     List<Compte> findByUtilisateurId(String userId);
     
-    public String decyptById(String userId);
+    //public String decyptById(String userId);
     
-    public String decyptByCle(String cle);
+    //public String decyptByCle(String cle);
     
 }

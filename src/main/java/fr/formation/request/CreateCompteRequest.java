@@ -23,8 +23,8 @@ public class CreateCompteRequest {
 	private String nomUtilisateurPlateforme;
 	private String urlPlateforme;
 
-	//@NotBlank(message = "Le mot de passe ne peut pas être vide")
-    //@Size(max = 512, message = "Le mot de passe ne peut pas dépasser 512 caractères")
+	@NotBlank(message = "Le mot de passe ne peut pas être vide")
+    @Size(max = 512, message = "Le mot de passe ne peut pas dépasser 512 caractères")
 	private String valeurMotdePassePlateforme;
 	
 	private Utilisateur utilisateur;
