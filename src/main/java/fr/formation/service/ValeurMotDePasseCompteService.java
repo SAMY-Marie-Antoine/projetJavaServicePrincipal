@@ -1,15 +1,12 @@
 package fr.formation.service;
 
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
+import java.security.MessageDigest;
+import java.util.Arrays;
 
-import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.KeyGenerator;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 import org.springframework.stereotype.Service;
 
@@ -17,29 +14,27 @@ import org.springframework.stereotype.Service;
 public class ValeurMotDePasseCompteService {
 	
 	
-	public static SecretKey generateKey(int n) throws NoSuchAlgorithmException {
-	    KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
-	    keyGenerator.init(n);
-	    SecretKey originalKey = keyGenerator.generateKey();
-	    return originalKey;
-	}
-	
-	public static String convertSecretKeyToString(SecretKey secretKey) throws NoSuchAlgorithmException {
-	    byte[] rawData = secretKey.getEncoded();
-	    String encodedKey = Base64.getEncoder().encodeToString(rawData);
-	    return encodedKey;
-	}
+	public byte[] encrypt(String message) throws Exception {
+        final MessageDigest md = MessageDigest.getInstance("md5");
+        final byte[] digestOfPassword = md.digest("HG58YZ3CR9"
+                .getBytes("utf-8"));
+        final byte[] keyBytes = Arrays.copyOf(digestOfPassword, 24);
+        for (int j = 0, k = 16; j < 8;) {
+            keyBytes[k++] = keyBytes[j++];
+        }
 
-	
-	public static byte[] encrypter(final String message, SecretKey cle)
-			throws NoSuchAlgorithmException, NoSuchPaddingException,
-			InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
-		Cipher cipher = Cipher.getInstance("DESede");
-		cipher.init(Cipher.ENCRYPT_MODE, cle);
-		byte[] donnees = message.getBytes();
+        final SecretKey key = new SecretKeySpec(keyBytes, "DESede");
+        final IvParameterSpec iv = new IvParameterSpec(new byte[8]);
+        final Cipher cipher = Cipher.getInstance("DESede/CBC/PKCS5Padding");
+        cipher.init(Cipher.ENCRYPT_MODE, key, iv);
 
-		return cipher.doFinal(donnees);
-	}
+        final byte[] plainTextBytes = message.getBytes("utf-8");
+        final byte[] cipherText = cipher.doFinal(plainTextBytes);
+        // final String encodedCipherText = new sun.misc.BASE64Encoder()
+        // .encode(cipherText);
+
+        return cipherText;
+    }
 	
 	
 	

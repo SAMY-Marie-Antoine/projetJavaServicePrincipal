@@ -1,14 +1,11 @@
 package fr.formation.service;
 
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
+import java.security.MessageDigest;
+import java.util.Arrays;
 
-import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.springframework.stereotype.Service;
@@ -16,20 +13,26 @@ import org.springframework.stereotype.Service;
 @Service
 public class ValeurMotDePasseCompteServiceDecryptage {
 	
-	public static SecretKey convertStringToSecretKeyto(String encodedKey) {
-	    byte[] decodedKey = Base64.getDecoder().decode(encodedKey);
-	    SecretKey originalKey = new SecretKeySpec(decodedKey, 0, decodedKey.length, "AES");
-	    return originalKey;
-	}
+	public String decrypt(byte[] message) throws Exception {
+        final MessageDigest md = MessageDigest.getInstance("md5");
+        final byte[] digestOfPassword = md.digest("HG58YZ3CR9"
+                .getBytes("utf-8"));
+        final byte[] keyBytes = Arrays.copyOf(digestOfPassword, 24);
+        for (int j = 0, k = 16; j < 8;) {
+            keyBytes[k++] = keyBytes[j++];
+        }
 
-	public static String decrypter(final byte[] donnees, SecretKey cle)
-			throws NoSuchAlgorithmException, NoSuchPaddingException,
-			InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
-		Cipher cipher = Cipher.getInstance("DESede");
-		cipher.init(Cipher.DECRYPT_MODE, cle);
+        final SecretKey key = new SecretKeySpec(keyBytes, "DESede");
+        final IvParameterSpec iv = new IvParameterSpec(new byte[8]);
+        final Cipher decipher = Cipher.getInstance("DESede/CBC/PKCS5Padding");
+        decipher.init(Cipher.DECRYPT_MODE, key, iv);
 
-		return new String(cipher.doFinal(donnees));
-	}
+        // final byte[] encData = new
+        // sun.misc.BASE64Decoder().decodeBuffer(message);
+        final byte[] plainText = decipher.doFinal(message);
+
+        return new String(plainText, "UTF-8");
+    }
 
 
 

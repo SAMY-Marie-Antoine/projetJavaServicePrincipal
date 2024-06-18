@@ -1,6 +1,5 @@
 package fr.formation.api;
 
-import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
@@ -28,12 +27,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import fr.formation.feignclient.VerificationFeignClient;
 import fr.formation.model.Compte;
+import fr.formation.model.Utilisateur;
 import fr.formation.repository.CompteRepository;
 import fr.formation.request.CreateCompteRequest;
 import fr.formation.response.CompteResponse;
@@ -44,7 +45,8 @@ import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/compte")
-@CrossOrigin("*")
+//@CrossOrigin("*")(origins = "http://localhost:4200")
+//@CrossOrigin(origins = "http://localhost:4200",methods= {RequestMethod.GET,RequestMethod.POST,RequestMethod.PUT,RequestMethod.PUT})
 public class CompteApiController {
 
 	private static final Logger log = LoggerFactory.getLogger(CompteApiController.class);
@@ -153,7 +155,8 @@ public class CompteApiController {
 	//demande de verification à coder 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-	public String create(@Valid @RequestBody CreateCompteRequest request) throws NoSuchAlgorithmException, InvalidKeyException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException, IllegalBlockSizeException {
+
+	public String create(@Valid @RequestBody CreateCompteRequest request) throws Exception {
 
 		log.info("Création d'un nouveau compte");
 		log.info("Exécution de la méthode Creation du Compte avec les détails: {}", request);
@@ -171,25 +174,20 @@ public class CompteApiController {
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est faible");
 		}
 		Compte compte = new Compte();
-		BeanUtils.copyProperties(request, compte);
+		/*if (!request.getUtilisateur().getId().isEmpty()) {
+			compte.setId(request.getUtilisateur().getId());
+		}*/
 		
+		BeanUtils.copyProperties(request, compte);
+
+		//compte.setId(request.getUtilisateur().getId());
 		compte.setDateAjout(LocalDateTime.now());
 		compte.setDateMAJ(LocalDateTime.now());
 
-		//Traitement generate cle
-		SecretKey cleInter=valeurMotDePasseCompteService.generateKey(0);
-		String cle=valeurMotDePasseCompteService.convertSecretKeyToString(cleInter);
+		byte[] codedtext = new ValeurMotDePasseCompteService().encrypt(request.getValeurMotdePassePlateforme());
+		String decodedtext = new ValeurMotDePasseCompteServiceDecryptage().decrypt(codedtext);
 
-		//Stockage base cle en string
-		compte.setCle(cle);
-		System.out.println("clé =" + cle);
-		
-
-		byte[]retour=valeurMotDePasseCompteService.encrypter(request.getValeurMotdePassePlateforme(), cleInter);
-
-		//Stockage base du mdp en string
-		compte.setValeurMotdePassePlateforme(Base64.getEncoder().encodeToString(retour));
-
+		compte.setValeurMotdePassePlateforme(Base64.getEncoder().encodeToString(codedtext));
 		this.compteRepository.save(compte);
 
 		log.info("Nouveau compte créé avec succès, ID : {}", compte.getId());
@@ -208,14 +206,14 @@ public class CompteApiController {
 		}
 
 		//Traitement conversion de la cle Sring BDD vers SecretKey
-		SecretKey cleInter=ValeurMotDePasseCompteServiceDecryptage.convertStringToSecretKeyto(optCompte.get().getCle());
+		//SecretKey cleInter=ValeurMotDePasseCompteServiceDecryptage.convertStringToSecretKeyto(optCompte.get().getCle());
 		//Traitement conversion de la ValeurMotdePassePlateforme Sring BDD vers Byte
-		byte[] donnees=optCompte.get().getValeurMotdePassePlateforme().getBytes();
+		//byte[] donnees=optCompte.get().getValeurMotdePassePlateforme().getBytes();
 		//Traitement decryptage de la ValeurMotdePassePlateforme		
-		String motDePasseDecrypt=ValeurMotDePasseCompteServiceDecryptage.decrypter(donnees, cleInter);
+		//String motDePasseDecrypt=ValeurMotDePasseCompteServiceDecryptage.decrypter(donnees, cleInter);
 
 		log.info("Compte trouvé pour l'ID : {}", id);
-		return motDePasseDecrypt;
+		return null;
 	}
 
 
