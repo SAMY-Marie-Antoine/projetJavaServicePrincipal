@@ -1,12 +1,16 @@
 package fr.formation.model;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.hibernate.annotations.UuidGenerator;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
@@ -33,6 +37,11 @@ public class Utilisateur {
 	@Transient
 	private String confirmMotDePasse;
 
+	@Column(name="reset_token")
+	private String resetToken;
+
+	@OneToMany(mappedBy = "utilisateur", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Compte> comptes = new ArrayList<>();
 
 
 	public String getId() {
@@ -82,5 +91,12 @@ public class Utilisateur {
 	public void setConfirmMotDePasse(String confirmMotDePasse) {
 		this.confirmMotDePasse = confirmMotDePasse;
 	}
+
+	public String getResetToken(){
+		return resetToken;
+	}
+    public void setResetToken(String resetToken) {
+        this.resetToken = resetToken;
+    }
 
 }

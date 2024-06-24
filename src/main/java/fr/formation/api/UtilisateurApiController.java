@@ -2,13 +2,16 @@ package fr.formation.api;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -224,7 +227,7 @@ public class UtilisateurApiController {
 
         // Utilisation de Feign pour vérifier la force du mot de passe
        boolean motDePasseForce=this.verificationFeignClient.getForceMotDePasse(request.getMotDePasse());
-       if (motDePasseForce ) {
+       if (!motDePasseForce ) {
            log.warn("Le mot de passe est faible dans la méthode inscription");
            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est faible");
            
@@ -241,5 +244,44 @@ public class UtilisateurApiController {
         log.info("La méthode inscription a été exécutée avec succès");
         return new InscriptionUtilisateurResponse(utilisateur.getId());
     }
+
+	@PostMapping("/forgot-password")
+	public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> body) {
+		log.info("Début de la méthode forgotPassword");
+
+		// Récupérer l'email à partir du corps de la requête
+		String email = body.get("email");
+		if (email == null || email.isEmpty()) {
+			log.error("L'email est obligatoire");
+			return ResponseEntity.badRequest().body("L'email est obligatoire");
+		}
+
+		// Rechercher l'utilisateur par email
+		Optional<Utilisateur> optUtilisateur = utilisateurRepository.findByEmail(email);
+		if (!optUtilisateur.isPresent()) {
+			log.error("Aucun utilisateur trouvé avec cet email : " + email);
+			return ResponseEntity.badRequest().body("Aucun utilisateur trouvé avec cet email");
+		}
+
+		// Générer un token de réinitialisation du mot de passe
+		String resetToken = UUID.randomUUID().toString();
+		log.info("Token de réinitialisation du mot de passe généré : " + resetToken);
+
+		Utilisateur utilisateur = optUtilisateur.get();
+		
+		// Enregistrer le token de réinitialisation du mot de passe dans la base de données
+		utilisateur.setResetToken(resetToken);
+		utilisateurRepository.save(utilisateur);
+		log.info("Token de réinitialisation du mot de passe enregistré pour l'utilisateur : " + email);
+
+		// Envoyer le lien de réinitialisation du mot de passe par email
+		// Vous devrez implémenter cette méthode selon votre service d'envoi d'email
+		motDePasseUtilisateurService.sendPasswordResetLink(email, resetToken);
+		log.info("Lien de réinitialisation du mot de passe envoyé à l'utilisateur : " + email);
+
+		log.info("Fin de la méthode forgotPassword");
+		return ResponseEntity.ok("Un lien de réinitialisation du mot de passe a été envoyé à votre email");
+	}
+
 
 }

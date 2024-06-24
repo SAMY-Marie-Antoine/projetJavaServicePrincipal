@@ -42,15 +42,10 @@ public class Compte {
 	
 	private String cle;
 	
-	public String getCle() {
-		return cle;
-	}
-	public void setCle(String cle) {
-		this.cle = cle;
-	}
-	@ManyToOne()
-	private Utilisateur utilisateur ;
 
+	//un compte est associé à un utilisateur
+	@ManyToOne()
+	private Utilisateur utilisateur;
 	
 	public String getId() {
 		return id;
@@ -105,6 +100,12 @@ public class Compte {
 	}
 	public void setUtilisateur(Utilisateur utilisateur) {
 		this.utilisateur = utilisateur;
+	}
+	public String getCle() {
+		return cle;
+	}
+	public void setCle(String cle) {
+		this.cle = cle;
 	}
 	
 }
