@@ -60,7 +60,6 @@ public class NoteApiController {
 
 	}
 
-
 	@GetMapping
 	public List<NoteResponse> findAll() {
 
@@ -71,16 +70,8 @@ public class NoteApiController {
 
 		for (Note note : notes) {
 			NoteResponse noteResponse = new NoteResponse();
-
 			BeanUtils.copyProperties(note, noteResponse);
-
 			response.add(noteResponse);
-
-			/*Integer note = this.commentaireFeignClient.getNoteByProduitId(note.getId());
-
-            if (note != null) {
-            	noteResponse.setNote(note);
-            }*/
 		}
 
 		log.info("Liste de tous les notes récupérée avec succès");
@@ -88,24 +79,19 @@ public class NoteApiController {
 		return response;
 	}
 
-
-
 	@GetMapping("/{id}/name")
 	public String getNameById(@Valid @PathVariable String id) {
 
 		log.info("Récupération du nom de la note avec l'id : {}", id);
-
 		Optional<Note> optNote = this.noteRepository.findById(id);
 
 		if (optNote.isPresent()) {
 			log.info("Note trouvée avec le nom : {}", optNote.get().getNom());
 			return optNote.get().getNom();
 		}
-
 		log.warn("Note non trouvée avec l'id : {}", id);
 		return "- note not found -";
 	}
-
 
 	@GetMapping("/{id}")
 	public Note findById(@Valid @PathVariable("id") String id) {
@@ -120,9 +106,6 @@ public class NoteApiController {
 		log.info("Note trouvée : {}", note.get());
 		return note.get();
 	}
-
-	
-
 	
 	@PutMapping("/{id}")
 	@ResponseStatus(HttpStatus.CREATED)
@@ -130,7 +113,6 @@ public class NoteApiController {
 		
 		Optional<Note> optionalNote = this.noteRepository.findById(id);
 		if (!optionalNote.isPresent()) {
-
 			// Si le note n'existe pas, créer un nouvel événement de journalisation
 			NoteEvent event = new NoteEvent();
 			event.setLevel("ERROR");
@@ -142,7 +124,6 @@ public class NoteApiController {
 
 			log.warn("Note not found with id: {}", id);
 			
-			//return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Note not found with id: " + id);
 			// Retourner une chaîne d'erreur
 			return new ResponseEntity<>(event.getMessage(), HttpStatus.NOT_FOUND);
 		}
@@ -158,6 +139,8 @@ public class NoteApiController {
 
 			Note notebdd = optionalNote.get();
 			BeanUtils.copyProperties(request, notebdd);
+			// mettre à jour la date de modification
+			notebdd.setDateModif(LocalDateTime.now());
 
 			this.noteRepository.save(notebdd);
 
@@ -172,7 +155,6 @@ public class NoteApiController {
 			log.info(event2.getMessage());
 		
 			log.info("Note mise à jour avec l'id : {}", notebdd.getId());
-			//return ResponseEntity.status(HttpStatus.CREATED).body(notebdd.getId());
 
 			// new ResponseEntity<>(notebdd.getId(), HttpStatus.OK) crée une nouvelle réponse 
 			//avec le corps notebdd.getId() et le statut HTTP 200 (OK).
@@ -231,6 +213,7 @@ public class NoteApiController {
 		Note note = new Note();
 		BeanUtils.copyProperties(request, note);
 
+		note.setId(request.getUtilisateur().getId());//h 22h
 		note.setDateAjout(LocalDateTime.now());
 		note.setDateModif(LocalDateTime.now());
 

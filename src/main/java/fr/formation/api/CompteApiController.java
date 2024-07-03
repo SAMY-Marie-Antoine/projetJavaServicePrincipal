@@ -107,7 +107,6 @@ public class CompteApiController {
 	}
 
 
-
 	@GetMapping("/{id}")
 	public Compte findById(@Valid @PathVariable("id") String id) {
 		log.info("Recherche du compte avec l'ID : {}", id);
@@ -154,6 +153,8 @@ public class CompteApiController {
 		Compte comptebdd=this.compteRepository.findById(id).get();
 		Compte compte = new Compte();
 		BeanUtils.copyProperties(request, comptebdd);
+		// mettre à jour la date de modification
+		comptebdd.setDateMAJ(LocalDateTime.now());
 
 		this.compteRepository.save(comptebdd);
 
@@ -245,7 +246,7 @@ public class CompteApiController {
 			event4.setLevel("WARN");
 			event4.setMessage("Le mot de passe est compromis dans la méthode inscription et le compte n'est pas crée");
 			event4.setTimestamp(LocalDateTime.now());
-			streamBridge.send("compte.created", event4);
+			streamBridge.send("compte.rejected", event4);
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est compromis et le compte n'est pas crée");
 		}
 
@@ -257,7 +258,7 @@ public class CompteApiController {
 			event5.setLevel("WARN");
 			event5.setMessage("Le mot de passe est faible dans la méthode inscription et le compte n'est pas crée");
 			event5.setTimestamp(LocalDateTime.now());
-			streamBridge.send("compte.created", event5);
+			streamBridge.send("compte.rejected", event5);
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est faible et le compte n'est pas crée");
 		}
 
@@ -270,7 +271,7 @@ public class CompteApiController {
 		// Copie des propriétés de la requête dans le compte
 		BeanUtils.copyProperties(request, compte);
 
-		//compte.setId(request.getUtilisateur().getId()); 02/7 ça pose pb pour creation
+		compte.setId(request.getUtilisateur().getId()); // H 03/7 21h
 		compte.setDateAjout(LocalDateTime.now());
 		compte.setDateMAJ(LocalDateTime.now());
 		
@@ -278,9 +279,9 @@ public class CompteApiController {
 		byte[] codedtext = new ValeurMotDePasseCompteService().encrypt(request.getValeurMotdePassePlateforme());
 		// Décodage du mot de passe chiffré (pour vérification)
 		String decodedtext = new ValeurMotDePasseCompteServiceDecryptage().decrypt(codedtext);
-
 		// Mise à jour du mot de passe chiffré dans le compte
 		compte.setValeurMotdePassePlateforme(Base64.getEncoder().encodeToString(codedtext));
+		
 		// Sauvegarde du compte dans la base de données
 		this.compteRepository.save(compte);
 
