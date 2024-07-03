@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -24,6 +25,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import fr.formation.event.Event;
+import fr.formation.event.VerificationCreatedEventUtilisateur;
 import fr.formation.feignclient.VerificationFeignClient;
 import fr.formation.model.Compte;
 import fr.formation.model.Note;
@@ -44,7 +47,7 @@ public class UtilisateurApiController {
 
 	private static final Logger log = LoggerFactory.getLogger(UtilisateurApiController.class);
 
-	
+
 	private final UtilisateurRepository utilisateurRepository;
 
 	@Autowired
@@ -58,6 +61,11 @@ public class UtilisateurApiController {
 
 	@Autowired
 	private MotDePasseUtilisateurService motDePasseUtilisateurService;
+
+	@Autowired
+	private StreamBridge streamBridge;
+
+	Event event = new Event();
 
 	//@Autowired //a enlever selon notre decision 
 	public UtilisateurApiController(UtilisateurRepository utilisateurRepository) {
@@ -76,10 +84,10 @@ public class UtilisateurApiController {
 		for (Utilisateur utilisateur : utilisateurs) {
 			InscriptionUtilisateurResponse utilisateurResponse = new InscriptionUtilisateurResponse();
 			BeanUtils.copyProperties(utilisateur, utilisateurResponse);
-			
+
 			// Appel à serviceVerification pour obtenir la force du mot de passe
 			boolean forceMotDePasse = this.verificationFeignClient.getForceMotDePasse(utilisateur.getMotDePasse());
-			
+
 			// Ajoutez la force du mot de passe à la réponse
 			utilisateurResponse.setForceMotDePasse(forceMotDePasse);
 
@@ -92,10 +100,10 @@ public class UtilisateurApiController {
 			utilisateurResponse.setComptes(comptes);
 
 			response.add(utilisateurResponse);
-    }
+		}
 
-    log.info("La méthode findAll a été exécutée avec succès");
-    return response;
+		log.info("La méthode findAll a été exécutée avec succès");
+		return response;
 	}
 
 
@@ -103,13 +111,29 @@ public class UtilisateurApiController {
 	public String getNameById(@Valid @PathVariable String id) {
 
 		log.info("Exécution de la méthode getNameById avec l'id: " + id);		
-		
+
 		Optional<Utilisateur> optUtilisateur = this.utilisateurRepository.findById(id);
 
 		if (optUtilisateur.isPresent()) {
 
-			log.info("La méthode getNameById a été exécutée avec succès");			
+			log.info("La méthode getNameById a été exécutée avec succès");		
+
+			event.setMessage("Vérification l'utilisateur: présent");
+			event.setLevel(optUtilisateur.get().getNom());
+			event.setPassword(optUtilisateur.get().getMotDePasse());
+			event.setUtilisateurId(optUtilisateur.get().getId());
+			
+			log.debug("Utilisateur ID trouvé ->", optUtilisateur.get().getId(), (this.streamBridge.send("verification.created",event)));
 			return optUtilisateur.get().getNom();
+		}
+		else {
+			event.setMessage("Vérification l'utilisateur: absent");
+			event.setLevel(optUtilisateur.get().getNom());
+			event.setPassword(optUtilisateur.get().getMotDePasse());
+			event.setUtilisateurId(optUtilisateur.get().getId());
+			
+			log.debug("Utilisateur ID non trouvé ->", optUtilisateur.get().getId(), (this.streamBridge.send("verification.rejected",event)));
+
 		}
 
 		log.warn("Utilisateur non trouvé dans la méthode getNameById avec l'id: " + id);
@@ -120,15 +144,32 @@ public class UtilisateurApiController {
 	public Utilisateur findById(@Valid @PathVariable("id") String id) {
 
 		log.info("Exécution de la méthode findById avec l'id: " + id);
-		Optional<Utilisateur> utilisateur = this.utilisateurRepository.findById(id);
+		Optional<Utilisateur> optUtilisateur = this.utilisateurRepository.findById(id);
 
-		if (utilisateur.isEmpty()) {
+		if (optUtilisateur.isEmpty()) {
 			log.warn("Utilisateur non trouvé dans la méthode findById avec l'id: " + id);
+
+			event.setMessage("Vérification l'utilisateur: absent");
+			event.setLevel(optUtilisateur.get().getNom());
+			event.setPassword(optUtilisateur.get().getMotDePasse());
+			event.setUtilisateurId(optUtilisateur.get().getId());
+			
+			log.debug("Utilisateur ID ->", optUtilisateur.get().getId(), (this.streamBridge.send("verification.rejected",event)));
+
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Id Utilisateur inexistant");
+		}
+		else {
+			event.setMessage("Vérification l'utilisateur: présent");
+			event.setLevel(optUtilisateur.get().getNom());
+			event.setPassword(optUtilisateur.get().getMotDePasse());
+			event.setUtilisateurId(optUtilisateur.get().getId());
+			
+			log.debug("Utilisateur ID ->", optUtilisateur.get().getId(), (this.streamBridge.send("verification.created",event)));
+
 		}
 
 		log.info("La méthode findById a été exécutée avec succès");
-		return utilisateur.get();
+		return optUtilisateur.get();
 	}
 
 	@PutMapping("/{id}")
@@ -136,15 +177,33 @@ public class UtilisateurApiController {
 	public String update(@Valid @PathVariable("id") String id,@RequestBody InscriptionUtilisateurRequest request) {
 
 		log.info("Exécution de la méthode update avec l'id: " + id);
-		
-		Utilisateur utilisateurbdd = this.utilisateurRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Id Utilisateur inexistant"));
 
-		
+		Utilisateur utilisateurbdd = this.utilisateurRepository.findById(id)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Id Utilisateur inexistant"));
+
+
 		BeanUtils.copyProperties(request, utilisateurbdd);
 
-		this.utilisateurRepository.save(utilisateurbdd);
+		if(utilisateurbdd.getId().isEmpty()) {
+			event.setMessage("Modification utilisateur : non modifié");
+			event.setLevel(utilisateurbdd.getNom());
+			event.setPassword(utilisateurbdd.getMotDePasse());
+			event.setUtilisateurId(utilisateurbdd.getId());
+		
 
+			log.debug("Exécution de la méthode update avec l'id: ", utilisateurbdd.getId(), (this.streamBridge.send("verification.rejected",event)));
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Echec Modification utilisateur");
+
+		}
+		else {
+			event.setMessage("Modification utilisateur : modifié");
+			event.setLevel(utilisateurbdd.getNom());
+			event.setPassword(utilisateurbdd.getMotDePasse());
+			event.setUtilisateurId(utilisateurbdd.getId());
+		
+			log.debug("Exécution de la méthode update avec l'id: ", utilisateurbdd.getId(), (this.streamBridge.send("verification.created",event)));
+			this.utilisateurRepository.save(utilisateurbdd);
+		}
 		log.info("La méthode update a été exécutée avec succès");
 		return utilisateurbdd.getId();
 	}
@@ -159,7 +218,27 @@ public class UtilisateurApiController {
 		Utilisateur utilisateur = new Utilisateur();
 		BeanUtils.copyProperties(request, utilisateurbdd);
 
-		this.utilisateurRepository.deleteById(id);
+		if(utilisateurbdd.get().getId().isEmpty()) {
+			event.setMessage("Suppression utilisateur : non supprimé");
+			event.setLevel(utilisateurbdd.get().getNom());
+			event.setPassword(utilisateurbdd.get().getMotDePasse());
+			event.setUtilisateurId(utilisateurbdd.get().getId());
+		
+
+			log.debug("Exécution de la méthode delete avec l'id: ", utilisateurbdd.get().getId(), (this.streamBridge.send("verification.rejected",event)));
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Echec Suppression utilisateur");
+
+		}
+		else {
+			event.setMessage("Suppression utilisateur : supprimé");
+			event.setLevel(utilisateurbdd.get().getNom());
+			event.setPassword(utilisateurbdd.get().getMotDePasse());
+			event.setUtilisateurId(utilisateurbdd.get().getId());
+		
+			log.debug("Exécution de la méthode delete avec l'id: ", utilisateurbdd.get().getId(), (this.streamBridge.send("verification.created",event)));
+			this.utilisateurRepository.deleteById(id);
+
+		}
 
 		log.info("La méthode delete a été exécutée avec succès");
 		return utilisateur.getId();
@@ -204,46 +283,80 @@ public class UtilisateurApiController {
 	@PostMapping("/inscription")
 	@ResponseStatus(HttpStatus.CREATED)
 	public InscriptionUtilisateurResponse inscription(@Valid @RequestBody InscriptionUtilisateurRequest request) {
-		
+
 		log.info("Exécution de la méthode inscription avec les détails: {}", request);
 
-        Optional<Utilisateur> optUtilisateur = this.utilisateurRepository.findByEmail(request.getEmail());
-        if (optUtilisateur.isPresent()) {
-            log.warn("Email déjà existant dans la méthode inscription");
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Email déjà existant");
-        }
+		Optional<Utilisateur> optUtilisateur = this.utilisateurRepository.findByEmail(request.getEmail());
+		if (optUtilisateur.isPresent()) {
+			log.warn("Email déjà existant dans la méthode inscription");
+			event.setMessage("Echec Inscription utilisateur : Email déjà existant");
+			event.setLevel(optUtilisateur.get().getEmail());
+			event.setPassword(optUtilisateur.get().getMotDePasse());
+			event.setUtilisateurId(optUtilisateur.get().getId());
+			
+			log.debug("Email déjà existant dans la méthode inscription:", optUtilisateur.get().getId(), (this.streamBridge.send("verification.rejected",event)));
 
-        if (!request.getMotDePasse().equals(request.getConfirmMotDePasse())) {
-            log.warn("La confirmation du mot de passe ne correspond pas dans la méthode inscription");
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "La confirmation du mot de passe ne correspond pas");
-        }
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Email déjà existant");
+		}
 
-        // Utilisation de Feign pour vérifier la vulnérabilité du mot de passe
-       boolean motDePasseCompromis=this.verificationFeignClient.getMotDePasseCompromis(request.getMotDePasse());
-       if (motDePasseCompromis ) {
-           log.warn("Le mot de passe est compromis dans la méthode inscription");
-           throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est compromis");
-       }
+		if (!request.getMotDePasse().equals(request.getConfirmMotDePasse())) {
+			log.warn("La confirmation du mot de passe ne correspond pas dans la méthode inscription");
+			event.setMessage("Echec Inscription utilisateur : La confirmation du mot de passe ne correspond pas");
+			event.setLevel(optUtilisateur.get().getNom());
+			event.setPassword(optUtilisateur.get().getMotDePasse());
+			event.setUtilisateurId(optUtilisateur.get().getId());
+			
 
-        // Utilisation de Feign pour vérifier la force du mot de passe
-       boolean motDePasseForce=this.verificationFeignClient.getForceMotDePasse(request.getMotDePasse());
-       if (!motDePasseForce ) {
-           log.warn("Le mot de passe est faible dans la méthode inscription");
-           throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est faible");
-           
-       }
+			log.debug("La confirmation du mot de passe ne correspond pas dans la méthode inscription:", optUtilisateur.get().getId(), (this.streamBridge.send("verification.rejected",event)));
 
-        Utilisateur utilisateur = new Utilisateur();
-        BeanUtils.copyProperties(request, utilisateur);
-		
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "La confirmation du mot de passe ne correspond pas");
+		}
+
+		// Utilisation de Feign pour vérifier la vulnérabilité du mot de passe
+		boolean motDePasseCompromis=this.verificationFeignClient.getMotDePasseCompromis(request.getMotDePasse());
+		if (motDePasseCompromis ) {
+			log.warn("Le mot de passe est compromis dans la méthode inscription");
+			event.setMessage("Mot de passe est compromis : oui");
+			event.setLevel(optUtilisateur.get().getNom());
+			event.setPassword(optUtilisateur.get().getMotDePasse());
+			event.setUtilisateurId(optUtilisateur.get().getId());
+
+			log.debug("Le mot de passe est compromis dans la méthode inscription:", optUtilisateur.get().getId(), (this.streamBridge.send("verification.rejected",event)));
+
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est compromis");
+		}
+
+		// Utilisation de Feign pour vérifier la force du mot de passe
+		boolean motDePasseForce=this.verificationFeignClient.getForceMotDePasse(request.getMotDePasse());
+		if (!motDePasseForce ) {
+			log.warn("Le mot de passe est faible dans la méthode inscription");
+			if (optUtilisateur.isPresent()) {
+			event.setMessage("Mot de passe est faible : oui");
+			event.setLevel(optUtilisateur.get().getNom());
+			event.setPassword(optUtilisateur.get().getMotDePasse());
+			event.setUtilisateurId(optUtilisateur.get().getId());
+			
+			log.debug("Le mot de passe est faible dans la méthode inscription:", optUtilisateur.get().getId(), (this.streamBridge.send("verification.rejected",event)));
+			}throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est faible");
+
+		}
+
+		Utilisateur utilisateur = new Utilisateur();
+		BeanUtils.copyProperties(request, utilisateur);
+
 		// Crypter le mot de passe avant de l'enregistrer
-        utilisateur.setMotDePasse(motDePasseUtilisateurService.crypterMotDePasse(request.getMotDePasse()));
+		utilisateur.setMotDePasse(motDePasseUtilisateurService.crypterMotDePasse(request.getMotDePasse()));
+		this.utilisateurRepository.save(utilisateur);
 
-        this.utilisateurRepository.save(utilisateur);
+		event.setMessage("Inscription utilisateur : inscrit");
+		
+		log.debug("Utilisateur inscrit: inscrit", utilisateur.getId(), (this.streamBridge.send("verification.created",event)));
 
-        log.info("La méthode inscription a été exécutée avec succès");
-        return new InscriptionUtilisateurResponse(utilisateur.getId());
-    }
+		log.info("La méthode inscription a été exécutée avec succès");
+		return new InscriptionUtilisateurResponse(utilisateur.getId());
+	}
+
+
 
 	@PostMapping("/forgot-password")
 	public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> body) {
@@ -268,7 +381,7 @@ public class UtilisateurApiController {
 		log.info("Token de réinitialisation du mot de passe généré : " + resetToken);
 
 		Utilisateur utilisateur = optUtilisateur.get();
-		
+
 		// Enregistrer le token de réinitialisation du mot de passe dans la base de données
 		utilisateur.setResetToken(resetToken);
 		utilisateurRepository.save(utilisateur);
