@@ -25,7 +25,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import fr.formation.event.Event;
 import fr.formation.event.VerificationCreatedEventUtilisateur;
 import fr.formation.feignclient.VerificationFeignClient;
 import fr.formation.model.Compte;
@@ -65,7 +64,7 @@ public class UtilisateurApiController {
 	@Autowired
 	private StreamBridge streamBridge;
 
-	Event event = new Event();
+	VerificationCreatedEventUtilisateur event = new VerificationCreatedEventUtilisateur();
 
 	//@Autowired //a enlever selon notre decision 
 	public UtilisateurApiController(UtilisateurRepository utilisateurRepository) {

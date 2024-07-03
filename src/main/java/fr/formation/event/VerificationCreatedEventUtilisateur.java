@@ -4,8 +4,15 @@ public class VerificationCreatedEventUtilisateur {
 	private String message;
 	private String nom;
 	private String password;
+	private String Level;
 	
-    private String UtilisateurId;
+    public String getLevel() {
+		return Level;
+	}
+	public void setLevel(String Level) {
+		this.Level = Level;
+	}
+	private String UtilisateurId;
     
     
     public String getMessage() {
