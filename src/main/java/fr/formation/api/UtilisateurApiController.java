@@ -253,6 +253,12 @@ public class UtilisateurApiController {
 		
 		if(optUtilisateur.isEmpty()) {
 			log.warn("Utilisateur non trouvé dans la méthode connexion");
+			event.setMessage("Echec connexion utilisateur : Utilisateur n'existe pas");
+			event.setLevel(request.getEmail());
+			event.setPassword(request.getMotDePasse());
+						
+			log.debug("Utilisateur n'existe pas dans la méthode connexion:", request.getEmail(), (this.streamBridge.send("verification.rejected",event)));
+
 
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND);
 		}
@@ -260,8 +266,12 @@ public class UtilisateurApiController {
 		if(!optUtilisateur.get().getEmail().equals(request.getEmail()) ) {
 
 			log.warn("Email inexistant dans la méthode connexion");
+			event.setMessage("Echec inexistant : Email n'existe pas");
+			event.setLevel(request.getEmail());
 
 			System.out.println("email inexistant !" + optUtilisateur.get().getEmail());
+			log.debug("Email n'existe pas dans la méthode connexion:", request.getEmail(), (this.streamBridge.send("verification.rejected",event)));
+
 
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
 		}
@@ -270,6 +280,12 @@ public class UtilisateurApiController {
 			
 			log.warn("Mot de passe incorrect dans la méthode connexion");
 			System.out.println("mot de passe incorrect");
+			event.setMessage("Mot de passe: Mot de passe incorrect");
+			event.setLevel(request.getEmail());
+
+			System.out.println("Mot de passe incorrect !" + optUtilisateur.get().getEmail());
+			log.debug("Mot de passe incorrect dans la méthode connexion:", request.getMotDePasse(), (this.streamBridge.send("verification.rejected",event)));
+
 
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
 			
@@ -289,11 +305,10 @@ public class UtilisateurApiController {
 		if (optUtilisateur.isPresent()) {
 			log.warn("Email déjà existant dans la méthode inscription");
 			event.setMessage("Echec Inscription utilisateur : Email déjà existant");
-			event.setLevel(optUtilisateur.get().getEmail());
-			event.setPassword(optUtilisateur.get().getMotDePasse());
-			event.setUtilisateurId(optUtilisateur.get().getId());
-			
-			log.debug("Email déjà existant dans la méthode inscription:", optUtilisateur.get().getId(), (this.streamBridge.send("verification.rejected",event)));
+			event.setLevel(request.getEmail());
+			event.setPassword(request.getMotDePasse());
+						
+			log.debug("Email déjà existant dans la méthode inscription:", request.getEmail(), (this.streamBridge.send("verification.rejected",event)));
 
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Email déjà existant");
 		}
@@ -301,10 +316,9 @@ public class UtilisateurApiController {
 		if (!request.getMotDePasse().equals(request.getConfirmMotDePasse())) {
 			log.warn("La confirmation du mot de passe ne correspond pas dans la méthode inscription");
 			event.setMessage("Echec Inscription utilisateur : La confirmation du mot de passe ne correspond pas");
-			event.setLevel(optUtilisateur.get().getNom());
-			event.setPassword(optUtilisateur.get().getMotDePasse());
-			event.setUtilisateurId(optUtilisateur.get().getId());
-			
+			event.setLevel(request.getNom());
+			event.setPassword(request.getMotDePasse());
+						
 
 			log.debug("La confirmation du mot de passe ne correspond pas dans la méthode inscription:", optUtilisateur.get().getId(), (this.streamBridge.send("verification.rejected",event)));
 
@@ -316,11 +330,11 @@ public class UtilisateurApiController {
 		if (motDePasseCompromis ) {
 			log.warn("Le mot de passe est compromis dans la méthode inscription");
 			event.setMessage("Mot de passe est compromis : oui");
-			event.setLevel(optUtilisateur.get().getNom());
-			event.setPassword(optUtilisateur.get().getMotDePasse());
-			event.setUtilisateurId(optUtilisateur.get().getId());
+			event.setLevel(request.getNom());
+			event.setPassword(request.getMotDePasse());
+			
 
-			log.debug("Le mot de passe est compromis dans la méthode inscription:", optUtilisateur.get().getId(), (this.streamBridge.send("verification.rejected",event)));
+			log.debug("Le mot de passe est compromis dans la méthode inscription:", request.getMotDePasse(), (this.streamBridge.send("verification.rejected",event)));
 
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est compromis");
 		}
@@ -329,14 +343,13 @@ public class UtilisateurApiController {
 		boolean motDePasseForce=this.verificationFeignClient.getForceMotDePasse(request.getMotDePasse());
 		if (!motDePasseForce ) {
 			log.warn("Le mot de passe est faible dans la méthode inscription");
-			if (optUtilisateur.isPresent()) {
-			event.setMessage("Mot de passe est faible : oui");
-			event.setLevel(optUtilisateur.get().getNom());
-			event.setPassword(optUtilisateur.get().getMotDePasse());
-			event.setUtilisateurId(optUtilisateur.get().getId());
 			
-			log.debug("Le mot de passe est faible dans la méthode inscription:", optUtilisateur.get().getId(), (this.streamBridge.send("verification.rejected",event)));
-			}throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est faible");
+			event.setMessage("Mot de passe est faible : oui");
+			event.setLevel(request.getNom());
+			event.setPassword(request.getMotDePasse());
+					
+			log.debug("Le mot de passe est faible dans la méthode inscription:", request.getMotDePasse(), (this.streamBridge.send("verification.rejected",event)));
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est faible");
 
 		}
 
