@@ -18,7 +18,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,6 +34,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import fr.formation.event.CompteEvent;
 import fr.formation.feignclient.VerificationFeignClient;
 import fr.formation.model.Compte;
 import fr.formation.model.Utilisateur;
@@ -56,6 +59,9 @@ public class CompteApiController {
 
 	@Autowired
 	private VerificationFeignClient verificationFeignClient;
+
+	@Autowired
+	private StreamBridge streamBridge;
 
 	@Autowired
 	private ValeurMotDePasseCompteService valeurMotDePasseCompteService;
@@ -85,7 +91,7 @@ public class CompteApiController {
 		return response;
 	}
 
-
+	
 	@GetMapping("/{id}/name")
 	public String getNameById(@Valid @PathVariable String id) {
 
@@ -118,9 +124,32 @@ public class CompteApiController {
 
 	@PutMapping("/{id}")
 	@ResponseStatus(HttpStatus.CREATED)
-	public String update(@Valid @PathVariable("id") String id,@RequestBody CreateCompteRequest request) {
+	public ResponseEntity<String> update(@Valid @PathVariable("id") String id,@RequestBody CreateCompteRequest request) {
 
-		log.info("Mise à jour du compte avec l'ID : {}", id);
+		// Vérification de l'existence du compte
+		Optional<Compte> optionalCompte = this.compteRepository.findById(id);
+		if (!optionalCompte.isPresent()) {
+			// Si le compte n'existe pas, créer un nouvel événement de journalisation
+			CompteEvent event = new CompteEvent();
+			event.setLevel("ERROR");
+			event.setMessage("Le compte avec l'ID : " + id + " n'existe pas.");
+			event.setTimestamp(LocalDateTime.now());
+			// Envoi de l'événement à l'écouteur approprié
+			streamBridge.send("compte.errorUpdated", event);
+			log.error(event.getMessage());
+			// Retourner une chaîne d'erreur
+			return new ResponseEntity<>(event.getMessage(), HttpStatus.NOT_FOUND);
+		}
+
+		// Création d'un nouvel objet CompteEvent pour la journalisation
+		CompteEvent event1 = new CompteEvent();
+		event1.setLevel("INFO");
+		event1.setMessage("Mise à jour du compte avec l'ID : " + id);
+		event1.setTimestamp(LocalDateTime.now());
+		// Envoi de l'événement à l'écouteur approprié
+		streamBridge.send("compte.updated", event1);
+
+		log.info(event1.getMessage());
 
 		Compte comptebdd=this.compteRepository.findById(id).get();
 		Compte compte = new Compte();
@@ -128,79 +157,171 @@ public class CompteApiController {
 
 		this.compteRepository.save(comptebdd);
 
-		log.info("Compte mis à jour avec succès pour l'ID : {}", id);
-		return compte.getId();
+		// Création d'un nouvel objet CompteEvent pour la journalisation
+		CompteEvent event2 = new CompteEvent();
+		event2.setLevel("INFO");
+		event2.setMessage("Compte mis à jour avec succès pour l'ID : " + id);
+		event2.setTimestamp(LocalDateTime.now());
+		// Envoi de l'événement à l'écouteur approprié
+		streamBridge.send("compte.updated", event2);
+	
+		log.info(event2.getMessage());
+	
+		// new ResponseEntity<>(comptebdd.getId(), HttpStatus.OK) crée une nouvelle réponse 
+		//avec le corps comptebdd.getId() et le statut HTTP 200 (OK).
+		return new ResponseEntity<>(comptebdd.getId(), HttpStatus.OK);
 	}
 
 	@DeleteMapping("/{id}")
-	@ResponseStatus(HttpStatus.CREATED)
-	public String delete(@Valid @PathVariable("id") String id) {
+	@ResponseStatus(HttpStatus.NO_CONTENT) // Indique que la suppression a réussi avec un code de statut 204
+	public void delete(@Valid @PathVariable("id") String id) {
 
-		log.info("Suppression du compte avec l'ID : {}", id);
+		CompteEvent event = new CompteEvent();
+
+		// Définition du niveau de l'événement
+		event.setLevel("INFO");
+		// Définition du message de l'événement
+		event.setMessage("Suppression du compte avec l'ID : " + id);
+		event.setTimestamp(LocalDateTime.now());
+		// Envoi de l'événement au StreamBridge
+		streamBridge.send("compte.deleted", event);
+		log.info(event.getMessage());
 
 		Optional<Compte> comptebdd=this.compteRepository.findById(id);
 
 		if (comptebdd.isEmpty()) {
-			log.error("Compte non trouvée avec l'id : {}", id);
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Id Note inexistant");
-		}
 
+			// Mise à jour du message de l'événement
+			event.setMessage("Compte non trouvé avec l'ID : " + id);
+			event.setTimestamp(LocalDateTime.now());
+			// Envoi du nouvel événement au StreamBridge
+			streamBridge.send("compte.deleted", event);
+			log.warn(event.getMessage());
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Id Compte inexistant");
+		}
 
 		this.compteRepository.deleteById(id);
 
-		log.info("Compte supprimé avec succès pour l'ID : {}", id);
-		return id;
+		// Mise à jour du message de l'événement
+		event.setMessage("Compte supprimé avec succès pour l'ID : " + id);
+		event.setTimestamp(LocalDateTime.now());
+		// Envoi du nouvel événement au StreamBridge
+		streamBridge.send("compte.deleted", event);
+		log.info(event.getMessage());
+		//return id;
 	}
 
-	//demande de verification à coder 
+	 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-
 	public String create(@Valid @RequestBody CreateCompteRequest request) throws Exception {
+
+		// Ajoutez le code de vérification ici
+		/*if (request.getUtilisateur() == null) {
+			log.error("L'objet Utilisateur est null");
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "L'objet Utilisateur est null");
+		} else if (request.getUtilisateur().getId() == null) {
+			log.error("L'ID de l'utilisateur est null");
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "L'ID de l'utilisateur est null");
+		}*/
+
+		// Création d'un nouvel objet CompteEvent pour la journalisation
+		CompteEvent event3 = new CompteEvent();
+		event3.setLevel("INFO");
+		event3.setMessage("Création d'un nouveau compte");
+		event3.setTimestamp(LocalDateTime.now());
+		// Envoi de l'événement à l'écouteur approprié
+		streamBridge.send("compte.created", event3);
 
 		log.info("Création d'un nouveau compte");
 		log.info("Exécution de la méthode Creation du Compte avec les détails: {}", request);
+		
 		// Utilisation de Feign pour vérifier la vulnérabilité du mot de passe
 		boolean motDePasseCompromis=this.verificationFeignClient.getMotDePasseCompromis(request.getValeurMotdePassePlateforme());
+		// Si le mot de passe est compromis, on envoie un avertissement et on lance une exception
 		if (motDePasseCompromis ) {
-			log.warn("Le mot de passe est compromis dans la méthode inscription");
-			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est compromis");
+
+			CompteEvent event4 = new CompteEvent();
+			event4.setLevel("WARN");
+			event4.setMessage("Le mot de passe est compromis dans la méthode inscription et le compte n'est pas crée");
+			event4.setTimestamp(LocalDateTime.now());
+			streamBridge.send("compte.created", event4);
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est compromis et le compte n'est pas crée");
 		}
 
 		// Utilisation de Feign pour vérifier la force du mot de passe
 		boolean motDePasseForce=this.verificationFeignClient.getForceMotDePasse(request.getValeurMotdePassePlateforme());
-		if (motDePasseForce ) {
-			log.warn("Le mot de passe est faible dans la méthode inscription");
-			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est faible");
+		if (!motDePasseForce ) {
+
+			CompteEvent event5 = new CompteEvent();
+			event5.setLevel("WARN");
+			event5.setMessage("Le mot de passe est faible dans la méthode inscription et le compte n'est pas crée");
+			event5.setTimestamp(LocalDateTime.now());
+			streamBridge.send("compte.created", event5);
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est faible et le compte n'est pas crée");
 		}
+
 		Compte compte = new Compte();
+
 		/*if (!request.getUtilisateur().getId().isEmpty()) {
 			compte.setId(request.getUtilisateur().getId());
 		}*/
 		
+		// Copie des propriétés de la requête dans le compte
 		BeanUtils.copyProperties(request, compte);
 
-		//compte.setId(request.getUtilisateur().getId());
+		//compte.setId(request.getUtilisateur().getId()); 02/7 ça pose pb pour creation
 		compte.setDateAjout(LocalDateTime.now());
 		compte.setDateMAJ(LocalDateTime.now());
-
+		
+		// Chiffrement du mot de passe
 		byte[] codedtext = new ValeurMotDePasseCompteService().encrypt(request.getValeurMotdePassePlateforme());
+		// Décodage du mot de passe chiffré (pour vérification)
 		String decodedtext = new ValeurMotDePasseCompteServiceDecryptage().decrypt(codedtext);
 
+		// Mise à jour du mot de passe chiffré dans le compte
 		compte.setValeurMotdePassePlateforme(Base64.getEncoder().encodeToString(codedtext));
+		// Sauvegarde du compte dans la base de données
 		this.compteRepository.save(compte);
 
-		log.info("Nouveau compte créé avec succès, ID : {}", compte.getId());
+		// Journalisation de la création réussie du compte
+		CompteEvent event = new CompteEvent();
+		event.setLevel("INFO");
+		event.setMessage("Nouveau compte créé avec succès, ID : " + compte.getId());
+		event.setTimestamp(LocalDateTime.now());
+		log.info(event.getMessage());
+		streamBridge.send("compte.created", event);
+		
+		// Retour de l'ID du compte créé
 		return compte.getId();
 	}
 
 
 	@GetMapping("cryptage/{id}")
 	public String decypt(@Valid @PathVariable("id") String id) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException {
+		
+		CompteEvent event = new CompteEvent();
+
+		// Définition du niveau de l'événement
+		event.setLevel("INFO");
+		// Définition du message de l'événement
+		event.setMessage("Recherche du compte avec l'ID : " + id);
+		event.setTimestamp(LocalDateTime.now());
+		// Envoi de l'événement au StreamBridge
+		streamBridge.send("compte.decrypted", event);
+		log.info(event.getMessage());
+
 		log.info("Recherche du compte avec l'ID : {}", id);
 		Optional<Compte> optCompte = this.compteRepository.findById(id);
 
 		if (optCompte.isEmpty()) {
+			// Mise à jour du message de l'événement
+			event.setMessage("Aucun compte trouvé pour l'ID : " + id);
+			event.setTimestamp(LocalDateTime.now());
+			// Envoi du nouvel événement au StreamBridge
+			streamBridge.send("compte.decrypted", event);
+			log.warn(event.getMessage());
+
 			log.warn("Aucun compte trouvé pour l'ID : {}", id);
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Id Compte inexistant");
 		}
@@ -212,6 +333,13 @@ public class CompteApiController {
 		//Traitement decryptage de la ValeurMotdePassePlateforme		
 		//String motDePasseDecrypt=ValeurMotDePasseCompteServiceDecryptage.decrypter(donnees, cleInter);
 
+		// Mise à jour du message de l'événement
+		event.setMessage("Compte trouvé pour l'ID : " + id);
+		event.setTimestamp(LocalDateTime.now());
+		// Envoi du nouvel événement au StreamBridge
+		streamBridge.send("compte.decrypted", event);
+		log.info(event.getMessage());
+
 		log.info("Compte trouvé pour l'ID : {}", id);
 		return null;
 	}
@@ -220,19 +348,51 @@ public class CompteApiController {
 	//lister les comptes d'un utilisateur spécifique
 	@GetMapping("/user/{userId}")
 	public List<CompteResponse> findByUserId(@Valid @PathVariable String userId) {
+		
+		CompteEvent event = new CompteEvent();
+		// Définition du niveau de l'événement
+		event.setLevel("INFO");
+		// Définition du message de l'événement
+		event.setMessage("Recherche des comptes pour l'utilisateur avec l'ID : " + userId);
+		// Ajout de l'horodatage à l'événement
+		event.setTimestamp(LocalDateTime.now());
+		// Envoi de l'événement au StreamBridge
+		streamBridge.send("compte.userRetrieved", event);
+		log.info(event.getMessage());
 
 		log.info("Recherche des comptes pour l'utilisateur avec l'ID : {}", userId);
-
+	
 		List<Compte> comptes = this.compteRepository.findByUtilisateurId(userId);
 		List<CompteResponse> response = new ArrayList<>();
 
 		for (Compte compte : comptes) {
-			CompteResponse compteResponse = new CompteResponse();
+			CompteResponse compteResponse = new CompteResponse();    
 			BeanUtils.copyProperties(compte, compteResponse);
 			response.add(compteResponse);
 		}
 
+		// Mise à jour du message de l'événement
+		event.setMessage("Comptes de l'utilisateur avec l'ID : " + userId + " récupérés avec succès");
+		event.setTimestamp(LocalDateTime.now());
+		// Envoi du nouvel événement au StreamBridge
+		streamBridge.send("compte.userRetrieved", event);
+		log.info(event.getMessage());
+
 		log.info("Comptes de l'utilisateur avec l'ID : {} récupérés avec succès", userId);
 		return response;
 	}
+
+	@GetMapping("/by-name/{nom}")
+	public List<Compte> getCompteByName(@Valid @PathVariable String nom) {
+		log.info("Recherche des comptes avec le nom : {}", nom);
+		List<Compte> comptes = this.compteRepository.findByNom(nom);
+
+		if (!comptes.isEmpty()) {
+			log.info("Comptes trouvés pour le nom : {}", nom);
+			return comptes;
+		}
+		log.warn("Aucun compte trouvé pour le nom : {}", nom);
+		return new ArrayList<>();
+	}
+
 }
