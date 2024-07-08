@@ -21,6 +21,11 @@ public class MotDePasseUtilisateurService {
         return bCryptPasswordEncoder.encode(motDePasse);
     }
 
+    public boolean matches(String motDePasseEnClair, String motDePasseHache) {
+        return bCryptPasswordEncoder.matches(motDePasseEnClair, motDePasseHache);
+    }
+
+
     public void sendPasswordResetLink(String email, String resetToken) {
         // 1. Créer l'URL de réinitialisation du mot de passe
         String resetPasswordUrl = "http://localhost:4200/reset-password?token=" + resetToken;

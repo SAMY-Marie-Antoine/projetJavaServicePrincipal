@@ -1,6 +1,7 @@
 package fr.formation.event;
 
 public class VerificationCreatedEvent {
+    
     private String VerificatonId;
     private String UtilisateurId;
     
@@ -17,5 +18,5 @@ public class VerificationCreatedEvent {
 		UtilisateurId = utilisateurId;
 	}
     
-    
+
 }

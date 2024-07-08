@@ -36,6 +36,7 @@ import fr.formation.repository.UtilisateurRepository;
 import fr.formation.request.InscriptionUtilisateurRequest;
 import fr.formation.request.LoginUtilisateurRequest;
 import fr.formation.response.InscriptionUtilisateurResponse;
+import fr.formation.response.ResponseMessage;
 import fr.formation.service.MotDePasseUtilisateurService;
 import jakarta.validation.Valid;
 
@@ -249,7 +250,8 @@ public class UtilisateurApiController {
 		
 		log.info("Exécution de la méthode connexion");
 		
-		Optional<Utilisateur> optUtilisateur = this.utilisateurRepository.findByEmailAndMotDePasse(request.getEmail(), request.getMotDePasse());
+		// Optional<Utilisateur> optUtilisateur = this.utilisateurRepository.findByEmailAndMotDePasse(request.getEmail(), request.getMotDePasse());
+		Optional<Utilisateur> optUtilisateur = this.utilisateurRepository.findByEmail(request.getEmail());
 		
 		if(optUtilisateur.isEmpty()) {
 			log.warn("Utilisateur non trouvé dans la méthode connexion");
@@ -275,8 +277,10 @@ public class UtilisateurApiController {
 
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
 		}
-				
-		if(!optUtilisateur.get().getMotDePasse().equals(request.getMotDePasse())) {
+		//ajout H 08/07	
+		Utilisateur utilisateur = optUtilisateur.get();
+		if (!motDePasseUtilisateurService.matches(request.getMotDePasse(), utilisateur.getMotDePasse())) {
+		// if(!optUtilisateur.get().getMotDePasse().equals(request.getMotDePasse())) {
 			
 			log.warn("Mot de passe incorrect dans la méthode connexion");
 			System.out.println("mot de passe incorrect");
@@ -408,5 +412,46 @@ public class UtilisateurApiController {
 		return ResponseEntity.ok("Un lien de réinitialisation du mot de passe a été envoyé à votre email");
 	}
 
+	@PostMapping("/reset-password")
+	public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> body) {
+		log.info("Début de la méthode resetPassword");
+
+		// Récupérer le token et le nouveau mot de passe à partir du corps de la requête
+		String resetToken = body.get("resetToken");
+		String newPassword = body.get("newPassword");
+		if (resetToken == null || resetToken.isEmpty() || newPassword == null || newPassword.isEmpty()) {
+			log.error("Le token et le nouveau mot de passe sont obligatoires");
+			return ResponseEntity.badRequest().body("Le token et le nouveau mot de passe sont obligatoires");
+		}
+
+		// Rechercher l'utilisateur par le token de réinitialisation du mot de passe
+		Optional<Utilisateur> optUtilisateur = utilisateurRepository.findByResetToken(resetToken);
+		if (!optUtilisateur.isPresent()) {
+			log.error("Aucun utilisateur trouvé avec ce token de réinitialisation du mot de passe : " + resetToken);
+			return ResponseEntity.badRequest().body("Aucun utilisateur trouvé avec ce token de réinitialisation du mot de passe");
+		}
+
+		// Utilisation de Feign pour vérifier la force du mot de passe
+		boolean motDePasseForce = this.verificationFeignClient.getForceMotDePasse(newPassword);
+		if (!motDePasseForce ) {
+			log.warn("Le nouveau mot de passe est faible");
+			return ResponseEntity.badRequest().body("Le nouveau mot de passe est faible");
+		}
+
+		Utilisateur utilisateur = optUtilisateur.get();
+
+		// Crypter le nouveau mot de passe avant de l'enregistrer
+		utilisateur.setMotDePasse(motDePasseUtilisateurService.crypterMotDePasse(newPassword));
+		// Réinitialiser le token de réinitialisation du mot de passe
+		utilisateur.setResetToken(null);
+		utilisateurRepository.save(utilisateur);
+		log.info("Le mot de passe a été réinitialisé avec succès pour l'utilisateur : " + utilisateur.getEmail());
+
+		log.info("Fin de la méthode resetPassword");
+		//return ResponseEntity.ok("Votre mot de passe a été réinitialisé avec succès");
+		// Au lieu de simplement renvoyer une chaîne, essayez de renvoyer un objet JSON.
+		ResponseMessage responseMessage = new ResponseMessage("Votre mot de passe a été réinitialisé avec succès");
+    	return ResponseEntity.ok(responseMessage);
+	} 
 
 }
