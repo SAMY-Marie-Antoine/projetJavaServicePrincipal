@@ -1,12 +1,21 @@
 package fr.formation.event;
 
+import java.time.LocalDateTime;
+
 public class VerificationCreatedEventUtilisateur {
 	private String message;
 	private String nom;
 	private String password;
 	private String Level;
+	private LocalDateTime timestamp;
 	
-    public String getLevel() {
+    public LocalDateTime getTimestamp() {
+		return timestamp;
+	}
+	public void setTimestamp(LocalDateTime timestamp) {
+		this.timestamp = timestamp;
+	}
+	public String getLevel() {
 		return Level;
 	}
 	public void setLevel(String Level) {

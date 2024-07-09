@@ -1,5 +1,6 @@
 package fr.formation.api;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -122,6 +123,7 @@ public class UtilisateurApiController {
 			event.setLevel(optUtilisateur.get().getNom());
 			event.setPassword(optUtilisateur.get().getMotDePasse());
 			event.setUtilisateurId(optUtilisateur.get().getId());
+			event.setTimestamp(LocalDateTime.now());
 			
 			log.debug("Utilisateur ID trouvé ->", optUtilisateur.get().getId(), (this.streamBridge.send("verification.created",event)));
 			return optUtilisateur.get().getNom();
@@ -131,6 +133,7 @@ public class UtilisateurApiController {
 			event.setLevel(optUtilisateur.get().getNom());
 			event.setPassword(optUtilisateur.get().getMotDePasse());
 			event.setUtilisateurId(optUtilisateur.get().getId());
+			event.setTimestamp(LocalDateTime.now());
 			
 			log.debug("Utilisateur ID non trouvé ->", optUtilisateur.get().getId(), (this.streamBridge.send("verification.rejected",event)));
 
@@ -153,6 +156,7 @@ public class UtilisateurApiController {
 			event.setLevel(optUtilisateur.get().getNom());
 			event.setPassword(optUtilisateur.get().getMotDePasse());
 			event.setUtilisateurId(optUtilisateur.get().getId());
+			event.setTimestamp(LocalDateTime.now());
 			
 			log.debug("Utilisateur ID ->", optUtilisateur.get().getId(), (this.streamBridge.send("verification.rejected",event)));
 
@@ -163,6 +167,7 @@ public class UtilisateurApiController {
 			event.setLevel(optUtilisateur.get().getNom());
 			event.setPassword(optUtilisateur.get().getMotDePasse());
 			event.setUtilisateurId(optUtilisateur.get().getId());
+			event.setTimestamp(LocalDateTime.now());
 			
 			log.debug("Utilisateur ID ->", optUtilisateur.get().getId(), (this.streamBridge.send("verification.created",event)));
 
@@ -189,6 +194,7 @@ public class UtilisateurApiController {
 			event.setLevel(utilisateurbdd.getNom());
 			event.setPassword(utilisateurbdd.getMotDePasse());
 			event.setUtilisateurId(utilisateurbdd.getId());
+			event.setTimestamp(LocalDateTime.now());
 		
 
 			log.debug("Exécution de la méthode update avec l'id: ", utilisateurbdd.getId(), (this.streamBridge.send("verification.rejected",event)));
@@ -200,6 +206,7 @@ public class UtilisateurApiController {
 			event.setLevel(utilisateurbdd.getNom());
 			event.setPassword(utilisateurbdd.getMotDePasse());
 			event.setUtilisateurId(utilisateurbdd.getId());
+			event.setTimestamp(LocalDateTime.now());
 		
 			log.debug("Exécution de la méthode update avec l'id: ", utilisateurbdd.getId(), (this.streamBridge.send("verification.created",event)));
 			this.utilisateurRepository.save(utilisateurbdd);
@@ -223,6 +230,7 @@ public class UtilisateurApiController {
 			event.setLevel(utilisateurbdd.get().getNom());
 			event.setPassword(utilisateurbdd.get().getMotDePasse());
 			event.setUtilisateurId(utilisateurbdd.get().getId());
+			event.setTimestamp(LocalDateTime.now());
 		
 
 			log.debug("Exécution de la méthode delete avec l'id: ", utilisateurbdd.get().getId(), (this.streamBridge.send("verification.rejected",event)));
@@ -234,6 +242,7 @@ public class UtilisateurApiController {
 			event.setLevel(utilisateurbdd.get().getNom());
 			event.setPassword(utilisateurbdd.get().getMotDePasse());
 			event.setUtilisateurId(utilisateurbdd.get().getId());
+			event.setTimestamp(LocalDateTime.now());
 		
 			log.debug("Exécution de la méthode delete avec l'id: ", utilisateurbdd.get().getId(), (this.streamBridge.send("verification.created",event)));
 			this.utilisateurRepository.deleteById(id);
@@ -258,6 +267,7 @@ public class UtilisateurApiController {
 			event.setMessage("Echec connexion utilisateur : Utilisateur n'existe pas");
 			event.setLevel(request.getEmail());
 			event.setPassword(request.getMotDePasse());
+			event.setTimestamp(LocalDateTime.now());
 						
 			log.debug("Utilisateur n'existe pas dans la méthode connexion:", request.getEmail(), (this.streamBridge.send("verification.rejected",event)));
 
@@ -270,6 +280,7 @@ public class UtilisateurApiController {
 			log.warn("Email inexistant dans la méthode connexion");
 			event.setMessage("Echec inexistant : Email n'existe pas");
 			event.setLevel(request.getEmail());
+			event.setTimestamp(LocalDateTime.now());
 
 			System.out.println("email inexistant !" + optUtilisateur.get().getEmail());
 			log.debug("Email n'existe pas dans la méthode connexion:", request.getEmail(), (this.streamBridge.send("verification.rejected",event)));
@@ -286,6 +297,7 @@ public class UtilisateurApiController {
 			System.out.println("mot de passe incorrect");
 			event.setMessage("Mot de passe: Mot de passe incorrect");
 			event.setLevel(request.getEmail());
+			event.setTimestamp(LocalDateTime.now());
 
 			System.out.println("Mot de passe incorrect !" + optUtilisateur.get().getEmail());
 			log.debug("Mot de passe incorrect dans la méthode connexion:", request.getMotDePasse(), (this.streamBridge.send("verification.rejected",event)));
@@ -311,6 +323,7 @@ public class UtilisateurApiController {
 			event.setMessage("Echec Inscription utilisateur : Email déjà existant");
 			event.setLevel(request.getEmail());
 			event.setPassword(request.getMotDePasse());
+			event.setTimestamp(LocalDateTime.now());
 						
 			log.debug("Email déjà existant dans la méthode inscription:", request.getEmail(), (this.streamBridge.send("verification.rejected",event)));
 
@@ -322,6 +335,7 @@ public class UtilisateurApiController {
 			event.setMessage("Echec Inscription utilisateur : La confirmation du mot de passe ne correspond pas");
 			event.setLevel(request.getNom());
 			event.setPassword(request.getMotDePasse());
+			event.setTimestamp(LocalDateTime.now());
 						
 
 			log.debug("La confirmation du mot de passe ne correspond pas dans la méthode inscription:", optUtilisateur.get().getId(), (this.streamBridge.send("verification.rejected",event)));
@@ -336,6 +350,7 @@ public class UtilisateurApiController {
 			event.setMessage("Mot de passe est compromis : oui");
 			event.setLevel(request.getNom());
 			event.setPassword(request.getMotDePasse());
+			event.setTimestamp(LocalDateTime.now());
 			
 
 			log.debug("Le mot de passe est compromis dans la méthode inscription:", request.getMotDePasse(), (this.streamBridge.send("verification.rejected",event)));
@@ -351,6 +366,7 @@ public class UtilisateurApiController {
 			event.setMessage("Mot de passe est faible : oui");
 			event.setLevel(request.getNom());
 			event.setPassword(request.getMotDePasse());
+			event.setTimestamp(LocalDateTime.now());
 					
 			log.debug("Le mot de passe est faible dans la méthode inscription:", request.getMotDePasse(), (this.streamBridge.send("verification.rejected",event)));
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est faible");
@@ -365,6 +381,7 @@ public class UtilisateurApiController {
 		this.utilisateurRepository.save(utilisateur);
 
 		event.setMessage("Inscription utilisateur : inscrit");
+		event.setTimestamp(LocalDateTime.now());
 		
 		log.debug("Utilisateur inscrit: inscrit", utilisateur.getId(), (this.streamBridge.send("verification.created",event)));
 
