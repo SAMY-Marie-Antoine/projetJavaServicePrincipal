@@ -1,0 +1,110 @@
+# This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-maven
+
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+name: Projet Contenu Securise Java
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: "17"
+          distribution: "temurin"
+          cache: maven
+
+      - name: Code coverage & scan SonarQube & packaging JAR
+        run: >
+          mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent package verify org.jacoco:jacoco-maven-plugin:report sonar:sonar -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml -Dsonar.projectKey=projetjavaserviceprincipal  -Dsonar.projectName='projetjavaserviceprincipal'  -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} -Dsonar.token=${{ secrets.SONAR_TOKEN }}
+      - name: SonarQube Quality Gate check
+        id: sonarqube-quality-gate-check
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        timeout-minutes: 5
+        with:
+          scanMetadataReportFile: target/sonar/report-task.txt
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+      - name: Partage du fichier JAR
+        uses: actions/upload-artifact@v3
+        with:
+          name: appjar
+          path: target/ci-projetjavaserviceprincipal.jar
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ckeckout du projet
+        uses: actions/checkout@v4
+
+      - name: Récupération du fichier JAR
+        uses: actions/download-artifact@v3
+        with:
+          name: appjar
+          path: target
+
+      - name: Installation QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Installation Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Connexion to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN_GITHUB }}
+      - name: Build and push sur Docker Hub
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: smarieantoine/projetjavaserviceprincipal:java
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Préparation de la connexion SSH vers notre machine
+        run: |
+          install -m 600 -D /dev/null ~/.ssh/id_rsa
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} > ~/.ssh/known_hosts
+      - name: Commandes pour info à executer sur la machine distante
+        run: >
+          ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}
+          "
+          docker stop projetjavaserviceprincipal || true
+          docker rm projetjavaserviceprincipal || true
+          docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN_SERVER }}
+          docker run -d -p 8089:8080 --name projetjavaserviceprincipal --pull=always smarieantoine/projetjavaserviceprincipal:java
+          exit
+          "
+      - name: Nettoyage
+        run: rm -rf ~/.ssh
+  #   - name: Set up JDK 17
+  #    uses: actions/setup-java@v3
+  #    with:
+  #     java-version: "17"
+  #     distribution: "temurin"
+  #    cache: maven
+  #  - name: Build with Maven
+  #   run: mvn -B package --file pom.xml
