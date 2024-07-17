@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.function.StreamBridge;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -151,7 +152,7 @@ public class CompteApiController {
 		log.info(event1.getMessage());
 
 		Compte comptebdd=this.compteRepository.findById(id).get();
-		Compte compte = new Compte();
+		
 		BeanUtils.copyProperties(request, comptebdd);
 		// mettre à jour la date de modification
 		comptebdd.setDateMAJ(LocalDateTime.now());

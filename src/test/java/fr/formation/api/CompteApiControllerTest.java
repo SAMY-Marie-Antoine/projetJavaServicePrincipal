@@ -1,6 +1,13 @@
 package fr.formation.api;
 
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -11,25 +18,34 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.http.MediaType;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import fr.formation.feignclient.VerificationFeignClient;
 import fr.formation.model.Compte;
+import fr.formation.model.Utilisateur;
 import fr.formation.repository.CompteRepository;
 import fr.formation.request.CreateCompteRequest;
 
 @ExtendWith(MockitoExtension.class)
+@SpringBootTest
 public class CompteApiControllerTest {
 
     private final static String ENDPOINT = "/api/compte";
@@ -42,6 +58,12 @@ public class CompteApiControllerTest {
 
     @InjectMocks
     private CompteApiController ctrl;
+
+    @Mock
+    private VerificationFeignClient verificationFeignClient;
+
+    @MockBean
+    private StreamBridge streamBridge;
 
     @BeforeEach
     public void beforeEach() {
@@ -116,25 +138,86 @@ public class CompteApiControllerTest {
     // Teste la méthode create pour vérifier que le statut HTTP est 201 (Created) et que le compte est créé
     @Test
     public void shouldCreateStatusCreated() throws Exception {
-        // given
+        // given: Préparation de la requête et des mocks
         CreateCompteRequest request = new CreateCompteRequest();
-        request.setNom("Test Compte");
-        request.setDescription("Description de test");
+        request.setNom("MonCompte");
+        request.setDescription("Description du compte");
         request.setDateAjout(LocalDateTime.now());
-        request.setValeurMotdePassePlateforme("password123");
-        
-        ObjectMapper mapper = new ObjectMapper();
-        
-        String requestJson = this.mapper.writeValueAsString(request);
-              
-        // when
-        ResultActions result = this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT)
-                .contentType("application/json")
-                .content(requestJson));
+        request.setValeurMotdePassePlateforme("MotDePasseFort123!");
 
-        // then
-        result.andExpect(MockMvcResultMatchers.status().isCreated());
+        Utilisateur utilisateur = new Utilisateur();
+        utilisateur.setId("utilisateur123");
+        request.setUtilisateur(utilisateur);
+
+        when(verificationFeignClient.getMotDePasseCompromis(anyString())).thenReturn(false);
+        when(verificationFeignClient.getForceMotDePasse(anyString())).thenReturn(true);
+        when(repository.save(any(Compte.class))).thenAnswer(invocation -> {
+            Compte compte = invocation.getArgument(0);
+            compte.setId("1"); // Simuler un ID généré comme chaîne de caractères
+            return compte;
+        });
+
+        // when: Exécution de la requête HTTP POST
+        mockMvc.perform(post(ENDPOINT)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(request)))
+
+        // then: Vérification du statut et de la réponse
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$").value("1"));
     }
+
+    // Teste la méthode create pour vérifier que le statut HTTP est 401 (Unauthorized) lorsque le mot de passe est compromis
+    @Test
+    public void shouldNotCreateWhenPasswordIsCompromised() throws Exception {
+        // given: Préparation de la requête et des mocks
+        CreateCompteRequest request = new CreateCompteRequest();
+        request.setNom("MonCompte");
+        request.setDescription("Description du compte");
+        request.setDateAjout(LocalDateTime.now());
+        request.setValeurMotdePassePlateforme("MotDePasseCompromis123!");
+
+        Utilisateur utilisateur = new Utilisateur();
+        utilisateur.setId("utilisateur123");
+        request.setUtilisateur(utilisateur);
+
+        when(verificationFeignClient.getMotDePasseCompromis(anyString())).thenReturn(true);
+
+        // when: Exécution de la requête HTTP POST
+        mockMvc.perform(post(ENDPOINT)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(request)))
+
+        // then: Vérification du statut et de la réponse
+                .andExpect(status().isUnauthorized());
+    }
+
+    // Teste la méthode create pour vérifier que le statut HTTP est 401 (Unauthorized) lorsque le mot de passe est faible
+    @Test
+    public void shouldNotCreateWhenPasswordIsWeak() throws Exception {
+        // given: Préparation de la requête et des mocks
+        CreateCompteRequest request = new CreateCompteRequest();
+        request.setNom("MonCompte");
+        request.setDescription("Description du compte");
+        request.setDateAjout(LocalDateTime.now());
+        request.setValeurMotdePassePlateforme("faible");
+
+        Utilisateur utilisateur = new Utilisateur();
+        utilisateur.setId("utilisateur123");
+        request.setUtilisateur(utilisateur);
+
+        when(verificationFeignClient.getMotDePasseCompromis(anyString())).thenReturn(false);
+        when(verificationFeignClient.getForceMotDePasse(anyString())).thenReturn(false);
+
+        // when: Exécution de la requête HTTP POST
+        mockMvc.perform(post(ENDPOINT)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(request)))
+
+        // then: Vérification du statut et de la réponse
+                .andExpect(status().isUnauthorized());
+    }
+
 
     // Teste la méthode create pour vérifier que le statut HTTP est 400 (Bad Request) lorsque la requête est incorrecte
     @ParameterizedTest
@@ -194,7 +277,7 @@ public class CompteApiControllerTest {
                 .content(requestJson));
 
         // then
-        result.andExpect(MockMvcResultMatchers.status().isCreated());
+        result.andExpect(MockMvcResultMatchers.status().isOk());
     }
 
     // Teste la méthode delete pour vérifier que le statut HTTP est 201 (Created) et que le compte est supprimé
@@ -209,7 +292,7 @@ public class CompteApiControllerTest {
         ResultActions result = this.mockMvc.perform(MockMvcRequestBuilders.delete(ENDPOINT + "/" + id));
 
         // then
-        result.andExpect(MockMvcResultMatchers.status().isCreated());
+        result.andExpect(MockMvcResultMatchers.status().isNoContent());
     }
 
     // Teste la méthode findByUserId pour vérifier que le statut HTTP est 200 (OK) et que les comptes sont retournés

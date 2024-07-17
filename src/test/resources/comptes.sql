@@ -1,0 +1,3 @@
+INSERT INTO compte (id, nom, description, date_ajout, date_maj, nom_utilisateur_plateforme, url_plateforme, valeur_motde_passe_plateforme, cle, utilisateur_id) VALUES
+('1', 'Compte1', 'Description1', '2024-07-15 15:27:30', '2024-07-15 15:27:30', 'Utilisateur1', 'http://url1.com', 'MotDePasse1', 'Cle1', '1'),
+('2', 'Compte2', 'Description2', '2024-07-15 15:27:30', '2024-07-15 15:27:30', 'Utilisateur2', 'http://url2.com', 'MotDePasse2', 'Cle2', '2');

@@ -27,13 +27,8 @@ public class ValeurMotDePasseCompteServiceDecryptage {
         final Cipher decipher = Cipher.getInstance("DESede/CBC/PKCS5Padding");
         decipher.init(Cipher.DECRYPT_MODE, key, iv);
 
-        // final byte[] encData = new
-        // sun.misc.BASE64Decoder().decodeBuffer(message);
         final byte[] plainText = decipher.doFinal(message);
 
         return new String(plainText, "UTF-8");
     }
-
-
-
 }

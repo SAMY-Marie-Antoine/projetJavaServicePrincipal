@@ -12,8 +12,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class ValeurMotDePasseCompteService {
-	
-	
+		
 	public byte[] encrypt(String message) throws Exception {
         final MessageDigest md = MessageDigest.getInstance("md5");
         final byte[] digestOfPassword = md.digest("HG58YZ3CR9"
@@ -30,18 +29,7 @@ public class ValeurMotDePasseCompteService {
 
         final byte[] plainTextBytes = message.getBytes("utf-8");
         final byte[] cipherText = cipher.doFinal(plainTextBytes);
-        // final String encodedCipherText = new sun.misc.BASE64Encoder()
-        // .encode(cipherText);
 
         return cipherText;
     }
-	
-	
-	
-	
-
-
-
-
-
 }

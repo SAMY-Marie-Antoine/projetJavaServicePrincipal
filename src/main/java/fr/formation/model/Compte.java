@@ -9,6 +9,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 
 @Entity
@@ -31,7 +32,7 @@ public class Compte {
 	@Column(name="date_maj")
 	private LocalDateTime dateMAJ;
 	
-	@Column(name="nom_utilisateur_plateforme;")
+	@Column(name="nom_utilisateur_plateforme")
 	private String nomUtilisateurPlateforme;
 	
 	@Column(name="url_plateforme")
@@ -39,6 +40,7 @@ public class Compte {
 	
 	@Column(name="valeur_motde_passe_plateforme", length = 512, nullable = false)
 	private String valeurMotdePassePlateforme;
+	
 	
 	private String cle;
 	

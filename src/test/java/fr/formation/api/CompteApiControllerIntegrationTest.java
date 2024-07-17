@@ -130,7 +130,7 @@ public class CompteApiControllerIntegrationTest {
         // given
         Compte compte = new Compte();
         compte.setId("1");
-        compte.setNom("Compte 1");
+        compte.setNom("Compte1");
 
         when(repository.findById("1")).thenReturn(Optional.of(compte));
 
@@ -139,7 +139,7 @@ public class CompteApiControllerIntegrationTest {
 
         // then
         result.andExpect(MockMvcResultMatchers.status().isOk())
-              .andExpect(MockMvcResultMatchers.content().string("Compte 1"));
+              .andExpect(MockMvcResultMatchers.content().string("Compte1"));
     }
 
     // Teste la récupération d'un compte par son ID avec authentification

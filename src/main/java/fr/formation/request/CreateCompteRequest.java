@@ -16,7 +16,7 @@ public class CreateCompteRequest {
 	private String nom;
 	private String description;
 	
-	//@NotNull(message = "La date d'ajout ne peut pas être nulle")
+	@NotNull(message = "La date d'ajout ne peut pas être nulle")
 	private LocalDateTime dateAjout;
 	private LocalDateTime dateMAJ;
 
