@@ -23,7 +23,7 @@ public class ValeurMotDePasseCompteServiceDecryptage {
         }
 
         final SecretKey key = new SecretKeySpec(keyBytes, "DESede");
-        final IvParameterSpec iv = new IvParameterSpec(new byte[8]);
+        final IvParameterSpec iv = new IvParameterSpec(new byte[8]); // IV de 8 octets pour DESede
         final Cipher decipher = Cipher.getInstance("DESede/CBC/PKCS5Padding");
         decipher.init(Cipher.DECRYPT_MODE, key, iv);
 

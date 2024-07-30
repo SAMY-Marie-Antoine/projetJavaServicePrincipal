@@ -67,6 +67,9 @@ public class CompteApiController {
 	@Autowired
 	private ValeurMotDePasseCompteService valeurMotDePasseCompteService;
 
+	@Autowired
+	private ValeurMotDePasseCompteServiceDecryptage decryptageService;
+
 
 	public CompteApiController(CompteRepository compteRepository) {
 
@@ -117,9 +120,24 @@ public class CompteApiController {
 			log.warn("Aucun compte trouvé pour l'ID : {}", id);
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Id Compte inexistant");
 		}
+		
+		// ajout pour envoyer le mdp en clair
+		Compte compteData = compte.get();
+		// Décrypter le mot de passe
+		byte[] decodedtext = Base64.getDecoder().decode(compteData.getValeurMotdePassePlateforme());
+		String decryptedPassword = null;
+		
+		try {
+			decryptedPassword = decryptageService.decrypt(decodedtext);
+		} catch (Exception e) {
+			log.error("Erreur lors du décryptage du mot de passe", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erreur lors du décryptage du mot de passe");
+		}
+		compteData.setValeurMotdePassePlateforme(decryptedPassword);
+
 
 		log.info("Compte trouvé pour l'ID : {}", id);
-		return compte.get();
+		return compteData; // Retourner l'objet compteData mis à jour
 	}
 
 	@PutMapping("/{id}")
