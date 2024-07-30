@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -43,6 +44,7 @@ import fr.formation.model.Compte;
 import fr.formation.model.Utilisateur;
 import fr.formation.repository.CompteRepository;
 import fr.formation.request.CreateCompteRequest;
+import fr.formation.service.ValeurMotDePasseCompteServiceDecryptage;
 
 @ExtendWith(MockitoExtension.class)
 @SpringBootTest
@@ -61,6 +63,9 @@ public class CompteApiControllerTest {
 
     @Mock
     private VerificationFeignClient verificationFeignClient;
+
+    @Mock
+    private ValeurMotDePasseCompteServiceDecryptage decryptageService;
 
     @MockBean
     private StreamBridge streamBridge;
@@ -107,7 +112,11 @@ public class CompteApiControllerTest {
         String id = "test-id";
         Compte compte = new Compte();
         compte.setId(id); // Assurez-vous que l'ID est défini
+        String encryptedPassword = Base64.getEncoder().encodeToString("password".getBytes());
+        compte.setValeurMotdePassePlateforme(encryptedPassword);
+
         Mockito.when(this.repository.findById(id)).thenReturn(Optional.of(compte));
+        Mockito.when(this.decryptageService.decrypt(any())).thenReturn("password"); // Simuler le service de décryptage
 
         // when
         ResultActions result = this.mockMvc.perform(MockMvcRequestBuilders.get(ENDPOINT + "/" + id));
@@ -116,6 +125,7 @@ public class CompteApiControllerTest {
         result.andExpect(MockMvcResultMatchers.status().isOk());
         result.andExpect(MockMvcResultMatchers.jsonPath("$.id").value(id));
 
+        // Vérifie que la méthode findById a été appelée une fois avec l'argument id
         Mockito.verify(this.repository).findById(id);
     }
 
